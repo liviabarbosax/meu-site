@@ -522,9 +522,9 @@ function verDetalhesCotacao(id) {
 // --- Lojas ---
 
 /**
- * REFEITO (Layout de Card Simplificado):
- * Renderiza um card por produto com um controle de lucro "global"
- * que recalcula uma lista de preços de lojas.
+ * REFEITO (Layout de Card Detalhado):
+ * Renderiza um card por produto com controle de lucro global,
+ * mostrando Venda Direta no header e Lucro/Margem por loja na lista.
  */
 function renderizarProdutosLojas() {
     // 1. Pegar os elementos
@@ -533,7 +533,7 @@ function renderizarProdutosLojas() {
     const placeholder = document.getElementById('lojas-placeholder');
 
     // 2. Limpar o container
-    container.innerHTML = ''; 
+    container.innerHTML = '';
 
     // 3. Pegar e filtrar os itens
     const itens = [
@@ -542,7 +542,7 @@ function renderizarProdutosLojas() {
     ];
 
     const itensFiltrados = itens.filter(i => !filtro || i.nome.toLowerCase().includes(filtro) || i.sku.toLowerCase().includes(filtro));
-    
+
     // 4. Mostrar/Esconder o placeholder
     placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
     if (itensFiltrados.length === 0) return;
@@ -550,48 +550,157 @@ function renderizarProdutosLojas() {
     // 5. Construir os CARDS
     itensFiltrados.forEach(item => {
         const custoTotal = item.isKit ? item.custoTotal : (item.custo + item.picking);
+        const precoVendaBase = item.precoVenda;
+        const lucroVendaBase = precoVendaBase - custoTotal;
         const idBase = `${item.id}-${item.isKit}`; // ID único para o card
 
         // Card principal
         let cardHTML = `<div class="precificacao-card">`;
 
-        // --- 1. Header do Card (Info do Produto) ---
+        // --- 1. Header do Card (Info do Produto + Venda Direta) ---
         cardHTML += `
             <div class="precificacao-header">
                 <img src="${item.imagem || 'https://via.placeholder.com/64'}" alt="${item.nome}" class="precificacao-img" onerror="this.src='https://via.placeholder.com/64';">
                 <div class="flex-1 min-w-0">
                     <h3 class="text-lg font-bold text-white truncate">${item.nome}</h3>
-                    <p class="text-sm text-gray-400">SKU: ${item.sku} | Custo Total: <span class="font-bold text-red-400">${formatarMoeda(custoTotal)}</span></p>
+                    <p class="text-sm text-gray-400">SKU: ${item.sku}</p>
+                    <p class="text-sm text-gray-400">Custo Total: <span class="font-bold text-red-400">${formatarMoeda(custoTotal)}</span></p>
+                </div>
+                <div class="precificacao-header-stats">
+                    <div>
+                        <span class="text-xs text-gray-400">Venda Direta</span>
+                        <p class="text-base font-bold text-blue-400">${formatarMoeda(precoVendaBase)}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400">Lucro Direto</span>
+                        <p class="text-base font-bold ${lucroVendaBase < 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(lucroVendaBase)}</p>
+                    </div>
                 </div>
             </div>
         `;
 
-        // --- 2. Controles do Card (O Input de Lucro) ---
+        // --- 2. Controles do Card (Input de Lucro) ---
         cardHTML += `
             <div class="precificacao-controls">
                 <label for="lucro-global-${idBase}">💰 Lucro desejado (R$):</label>
-                <input type="number" step="0.01" value="10.00" id="lucro-global-${idBase}" 
+                <input type="number" step="0.01" value="10.00" id="lucro-global-${idBase}"
                        oninput="recalcularCardProduto(${item.id}, ${item.isKit})">
             </div>
         `;
 
-        // --- 3. Lista de Lojas (Onde os preços aparecem) ---
+        // --- 3. Lista de Lojas (Com detalhes de Lucro/Margem por loja) ---
         cardHTML += `<div class="precificacao-lojas-lista">`;
-        
+
         Object.keys(lojasConfig).forEach(key => {
             const loja = lojasConfig[key];
+            // ID único para os elementos DENTRO desta linha de loja
+            const idLoja = `${key}-${idBase}`;
+
             cardHTML += `
                 <div class="precificacao-loja-item">
                     <div class="loja-info">
                         <img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="loja-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/20/0F172A/94a3b8?text=${loja.nome[0]}';">
                         <span>${loja.nome}</span>
                     </div>
-                    <span class="loja-preco-sugerido" id="preco-${key}-${idBase}">R$ 0,00</span>
+                    <div class="loja-resultados">
+                        <span class="loja-preco-sugerido" id="preco-${idLoja}">R$ 0,00</span>
+                        <span class="loja-detalhes">(Lucro R$ <span id="lucro-real-${idLoja}">0,00</span> | Mg <span id="margem-${idLoja}">0.0</span>%)</span>
+                    </div>
                 </div>
             `;
         });
-        
+
         cardHTML += `</div>`; // Fim .precificacao-lojas-lista
+
+        // --- 4. Footer do Card (Margem Média) ---
+        cardHTML += `
+            <div class="precificacao-footer">
+                🧮 Margem média:
+                <span class="font-bold text-white" id="margem-media-${idBase}">0.0%</span>
+            </div>
+        `;
+
+        cardHTML += `</div>`; // Fim .precificacao-card
+
+        // Adiciona o card completo ao container
+        container.innerHTML += cardHTML;
+
+        // Dispara o cálculo inicial para este card
+        recalcularCardProduto(item.id, item.isKit);
+    });
+}
+
+
+/**
+ * ATUALIZADO: Recalcula TODOS os preços E os detalhes (lucro/margem)
+ * de um card baseado no input de "Lucro desejado" global.
+ */
+function recalcularCardProduto(itemId, isKit) {
+    // 1. Encontrar o item
+    const item = (isKit ? kits : produtos).find(i => i.id === itemId);
+    if (!item) return;
+
+    // 2. ID base do card
+    const idBaseCard = `${itemId}-${isKit}`;
+
+    // 3. Custo Total
+    const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
+
+    // 4. Lucro Desejado do input
+    const lucroInput = document.getElementById(`lucro-global-${idBaseCard}`);
+    if (!lucroInput) return;
+    const lucroDesejado = parseFloat(lucroInput.value) || 0;
+
+    // 5. Variáveis para média
+    let totalMargem = 0;
+    let totalLojas = 0;
+
+    // 6. Loop nas lojas
+    Object.keys(lojasConfig).forEach(lojaKey => {
+        const cfg = lojasConfig[lojaKey];
+        const idLoja = `${lojaKey}-${idBaseCard}`; // ID base para os elementos desta loja
+
+        // --- O CÁLCULO (igual ao anterior) ---
+        let precoSugerido = 0;
+        const divisor = 1 - cfg.comissao;
+        if (divisor > 0) {
+            precoSugerido = (custoTotal + cfg.taxaFixa + lucroDesejado) / divisor;
+        } else {
+            precoSugerido = custoTotal + cfg.taxaFixa + lucroDesejado;
+        }
+
+        const lucroReal = (precoSugerido * (1 - cfg.comissao)) - cfg.taxaFixa - custoTotal;
+        const margemReal = precoSugerido > 0 ? (lucroReal / precoSugerido * 100) : 0;
+
+        totalMargem += margemReal;
+        totalLojas++;
+
+        // 7. ATUALIZAR os spans na tela (Preço, Lucro Real, Margem)
+        const precoSpan = document.getElementById(`preco-${idLoja}`);
+        const lucroRealSpan = document.getElementById(`lucro-real-${idLoja}`);
+        const margemSpan = document.getElementById(`margem-${idLoja}`);
+
+        if (precoSpan) {
+            precoSpan.textContent = formatarMoeda(precoSugerido);
+            precoSpan.classList.toggle('text-red-400', lucroReal < 0);
+            precoSpan.classList.toggle('text-green-400', lucroReal >= 0);
+        }
+        if(lucroRealSpan) {
+            // Mostra apenas o número do lucro, sem "R$"
+            lucroRealSpan.textContent = lucroReal.toFixed(2).replace('.', ',');
+        }
+        if(margemSpan) {
+            margemSpan.textContent = margemReal.toFixed(1).replace('.', ',');
+        }
+    });
+
+    // 8. Calcular e atualizar a Margem Média
+    const margemMedia = totalLojas > 0 ? totalMargem / totalLojas : 0;
+    const margemMediaSpan = document.getElementById(`margem-media-${idBaseCard}`);
+    if (margemMediaSpan) {
+        margemMediaSpan.textContent = `${margemMedia.toFixed(1)}%`.replace('.', ',');
+    }
+}
 
         // --- 4. Footer do Card (Margem Média) ---
         cardHTML += `

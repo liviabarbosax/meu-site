@@ -34,7 +34,7 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* Lojas - NOVO LAYOUT DE CARD SIMPLIFICADO (Wireframe) */
+/* Lojas - NOVO LAYOUT DE CARD DETALHADO */
 
 /* O Card Principal do Produto */
 .precificacao-card {
@@ -47,11 +47,17 @@ body {
     gap: 1.25rem; /* gap-5 */
 }
 
-/* Header (Img, Nome, SKU, Custo) */
+/* Header (Img, Nome, SKU, Custo E STATS) */
 .precificacao-header {
     display: flex;
-    align-items: center;
+    flex-direction: column; /* Mobile first */
     gap: 1rem; /* gap-4 */
+}
+@media (min-width: 768px) { /* md: */
+    .precificacao-header {
+        flex-direction: row; /* Lado a lado em telas maiores */
+        align-items: center;
+    }
 }
 
 .precificacao-img {
@@ -63,12 +69,34 @@ body {
     flex-shrink: 0;
 }
 
+/* Stats no Header (Venda Direta, Lucro Direto) */
+.precificacao-header-stats {
+    display: flex;
+    gap: 1.5rem; /* gap-6 */
+    flex-shrink: 0;
+    margin-top: 0.5rem; /* Espaço acima no mobile */
+    border-top: 1px solid #334155; /* Linha divisória no mobile */
+    padding-top: 0.75rem; /* pt-3 */
+}
+@media (min-width: 768px) { /* md: */
+    .precificacao-header-stats {
+        margin-top: 0;
+        margin-left: auto; /* Empurra para a direita */
+        border-top: none;
+        padding-top: 0;
+    }
+}
+.precificacao-header-stats div {
+    text-align: right;
+}
+
+
 /* Controles (Input de Lucro) */
 .precificacao-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem; /* gap-2 */
-    background-color: #16213E; /* Cor da sidebar, para destacar */
+    background-color: #16213E;
     padding: 0.75rem 1rem; /* p-3 p-4 */
     border-radius: 0.5rem;
 }
@@ -94,11 +122,11 @@ body {
     box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5);
 }
 
-/* Lista de Lojas (Preços) */
+/* Lista de Lojas (Preços E DETALHES) */
 .precificacao-lojas-lista {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem; /* gap-3 */
+    gap: 0.5rem; /* Reduzido para ficar mais compacto */
     border-top: 1px solid #334155;
     padding-top: 1.25rem; /* pt-5 */
 }
@@ -107,7 +135,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 0.5rem; /* px-2 */
+    padding: 0.25rem 0.5rem; /* Reduzido padding vertical */
 }
 
 .precificacao-loja-item .loja-info {
@@ -116,6 +144,8 @@ body {
     gap: 0.75rem; /* gap-3 */
     font-size: 0.9rem;
     color: #e5e7eb; /* gray-200 */
+    flex-shrink: 0; /* Evita que o nome da loja encolha */
+    min-width: 150px; /* Garante espaço para o nome da loja */
 }
 
 .loja-logo {
@@ -124,29 +154,46 @@ body {
     object-fit: contain;
 }
 
+/* Container para Preço e Detalhes (Lucro/Margem) */
+.loja-resultados {
+    display: flex;
+    flex-direction: column; /* Empilha Preço e Detalhes */
+    align-items: flex-end; /* Alinha à direita */
+    gap: 0.1rem; /* Espaço mínimo entre preço e detalhes */
+    text-align: right;
+    flex-grow: 1; /* Ocupa espaço restante */
+    margin-left: 1rem; /* Espaço entre nome da loja e resultados */
+}
+
 .loja-preco-sugerido {
     font-size: 1rem; /* text-base */
     font-weight: 700; /* font-bold */
 }
 .loja-preco-sugerido.text-green-400 { color: #34d399; }
-.loja-preco-sugerido.text-red-400 { color: #f87171; } /* Um vermelho mais suave */
+.loja-preco-sugerido.text-red-400 { color: #f87171; }
+
+.loja-detalhes {
+    font-size: 0.7rem; /* bem pequeno */
+    color: #9ca3af; /* gray-400 */
+    white-space: nowrap; /* Evita quebra de linha */
+}
 
 
 /* Footer (Margem Média) */
 .precificacao-footer {
     border-top: 1px solid #334155;
-    padding-top: 1.25rem; /* pt-5 */
+    padding-top: 1rem; /* Reduzido */
+    margin-top: 0.5rem; /* Adicionado espaço acima */
     font-size: 0.9rem;
     color: #9ca3af; /* gray-400 */
     text-align: right;
 }
 
 
-/* Garante que o container de scroll não exista mais e limpa estilos antigos */
+/* Garante que o container de scroll não exista mais */
 #lista-produtos-lojas-container {
     max-height: none;
     overflow-y: visible;
-    /* Remove estilos de .table-lojas, .loja-cell, .lojas-grid, .produto-precificacao-card, etc., pois foram substituídos */
 }
 
 /* Inputs gerais (ESSES FICAM) */

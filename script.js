@@ -534,10 +534,10 @@ function verDetalhesCotacao(id) {
 // --- Lojas ---
 
 /**
- * ATUALIZADO: Renderiza a tabela de lojas dinamicamente
- * 1. Cria o cabeçalho (thead) com base na lojasConfig
- * 2. Cria as linhas (tbody) para cada produto/kit
- * 3. Adiciona os inputs de "Lucro R$" com R$10,00 padrão
+ * ATUALIZADO (NOVAMENTE): Renderiza a tabela de lojas dinamicamente.
+ * MELHORIA: Para Facebook e WhatsApp, o input "Lucro R$" agora é preenchido
+ * automaticamente com o lucro real (calculado a partir do 'Preço Venda Direta'
+ * cadastrado no produto), em vez do padrão de R$10.
  */
 function renderizarProdutosLojas() {
     const thead = document.getElementById('lista-produtos-lojas-thead');
@@ -546,57 +546,81 @@ function renderizarProdutosLojas() {
     const placeholder = document.getElementById('lojas-placeholder');
 
     // --- 1. Gerar Cabeçalho Dinâmico ---
-    thead.innerHTML = ''; // Limpa o cabeçalho estático antigo
+    thead.innerHTML = ''; // Limpa o cabeçalho
     let headerHTML = '<tr>';
-    headerHTML += '<th class="w-1/4">Produto / Kit</th>';
-    headerHTML += '<th class="w-[100px]">Custo Total</th>';
-
-    // Adiciona uma coluna de header para cada loja na config
+    headerHTML += '<th class="w-1/4">Produto / Kit</th>'; // Coluna do produto (com Preço Direto)
+    headerHTML += '<th class="w-[120px]">Custo Total</th>';
+    
+    // Adiciona uma coluna de header para cada loja na config (com logo)
     Object.values(lojasConfig).forEach(loja => {
-        headerHTML += `<th>${loja.nome}</th>`;
+        headerHTML += `<th>
+            <div class="flex items-center gap-2 justify-center">
+                ${loja.logo ? `<img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="h-6 w-6 object-contain" onerror="this.onerror=null; this.src='httpsa://via.placeholder.com/24/0F172A/94a3b8?text=${loja.nome[0]}';">` : ''}
+                ${loja.nome}
+            </div>
+        </th>`;
     });
     headerHTML += '</tr>';
     thead.innerHTML = headerHTML;
 
     // --- 2. Gerar Corpo da Tabela ---
     tbody.innerHTML = ''; // Limpa o corpo
-
+    
     const itens = [
         ...produtos.map(p => ({ ...p, isKit: false })),
         ...kits.map(k => ({ id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`, custo: k.custoTotal, picking: 0, precoVenda: k.precoVenda, imagem: null, isKit: true }))
     ];
 
     const itensFiltrados = itens.filter(i => !filtro || i.nome.toLowerCase().includes(filtro) || i.sku.toLowerCase().includes(filtro));
-
+    
     placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
     if (itensFiltrados.length === 0) return;
 
     itensFiltrados.forEach(item => {
-        // O Custo Total = Custo do produto + Custo de Picking/Packing
-        // Para Kits, o picking já está embutido no custoTotal do kit
         const custoTotal = item.isKit ? item.custoTotal : (item.custo + item.picking);
-
+        
         let rowHTML = `<tr data-item-id="${item.id}" data-is-kit="${item.isKit}">`;
-
-        // Coluna 1: Produto Info
-        rowHTML += `<td class="w-1/4"><div class="produto-info"><img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';"><div><p class="font-semibold text-white truncate">${item.nome}</p><p class="text-xs text-gray-400">SKU: ${item.sku}</p></div></div></td>`;
-
+        
+        // Coluna 1: Produto Info (com Preço Direta)
+        rowHTML += `<td class="w-1/4">
+            <div class="produto-info">
+                <img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';">
+                <div>
+                    <p class="font-semibold text-white truncate">${item.nome}</p>
+                    <p class="text-xs text-gray-400">SKU: ${item.sku}</p>
+                    <p class="text-xs text-blue-400 font-bold mt-1">Venda Direta (Base): ${formatarMoeda(item.precoVenda)}</p>
+                </div>
+            </div>
+        </td>`;
+        
         // Coluna 2: Custo Total
-        rowHTML += `<td>${formatarMoeda(custoTotal)}</td>`;
+        rowHTML += `<td class="text-center">${formatarMoeda(custoTotal)}</td>`;
 
         // Colunas 3+: Lojas (Dinâmico)
         Object.keys(lojasConfig).forEach(key => {
-            // ID único para cada célula (ex: shopee-12345-false)
-            const idBase = `${key}-${item.id}-${item.isKit}`; 
+            const idBase = `${key}-${item.id}-${item.isKit}`;
+            
+            // --- AQUI ESTÁ A MELHORIA ---
+            let valorInputLucro = "10.00"; // Padrão de R$10
+            
+            // Se a loja for Wpp ou Face (sem comissão)
+            if (lojasConfig[key].comissao === 0) {
+                // O lucro padrão será o Preço de Venda (base) - Custo Total
+                const lucroVendaDireta = item.precoVenda - custoTotal;
+                valorInputLucro = lucroVendaDireta.toFixed(2);
+            }
+            // --- FIM DA MELHORIA ---
+            
             rowHTML += `
                 <td>
                     <div class="loja-cell">
-                        <div class="lucro-input-group">
-                            <label for="lucro-${idBase}">Lucro</label>
-                            <input type="number" step="0.01" value="10.00" id="lucro-${idBase}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit}, '${key}')">
+                        <div class="input-group">
+                            <label for="lucro-${idBase}">Lucro R$</label>
+                            <input type="number" step="0.01" value="${valorInputLucro}" id="lucro-${idBase}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit}, '${key}')">
                         </div>
-                        <div class="stats">
-                            <span>Mg: <span id="margem-${idBase}">0%</span></span>
+                        <div class="info-line">
+                            <span class="text-gray-400">Mg: <span id="margem-${idBase}" class="font-semibold">0%</span></span>
+                            <span class="text-gray-400">Lucro R$: <span id="lucro-real-${idBase}" class="font-semibold">R$ 0,00</span></span>
                         </div>
                         <div class="preco-sugerido" id="preco-${idBase}">
                             R$ 0,00
@@ -607,8 +631,8 @@ function renderizarProdutosLojas() {
 
         rowHTML += `</tr>`;
         tbody.innerHTML += rowHTML;
-
-        // Dispara o cálculo inicial (com R$10) para esta linha
+        
+        // Dispara o cálculo inicial para esta linha
         Object.keys(lojasConfig).forEach(key => {
             recalcularPrecosLoja(item.id, item.isKit, key);
         });

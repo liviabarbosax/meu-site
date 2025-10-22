@@ -143,25 +143,17 @@
                 </div>
             </div>
             
-            <div id="lojas-page" class="page-content hidden">
+<div id="lojas-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">🏪 Precificação por Loja</h2>
                 <div class="custom-card rounded-lg p-6 mb-6">
                     <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtro</h3>
                     <input type="text" id="filtro-lojas" placeholder="Buscar produto ou kit por nome/SKU..." class="form-input w-full md:w-1/2">
                 </div>
-                <div id="lista-produtos-lojas-container" class="custom-card rounded-lg overflow-hidden">
-                    <table class="w-full text-sm custom-text table-lojas min-w-[800px]">
-                        <thead class="sticky-header">
-                            <tr>
-                                <th class="w-1/4">Produto / Kit</th>
-                                <th class="w-[100px]">Custo Total</th>
-                                <th class="w-[150px]">Shopee</th>
-                                <th class="w-[150px]">Amazon</th>
-                                <th class="w-[150px]">ML Premium</th>
-                                <th class="w-[150px]">TikTok Shop</th>
-                                <th class="w-[150px]">Venda Direta</th>
-                            </tr>
-                        </thead>
+                
+                <div id="lista-produtos-lojas-container" class="custom-card rounded-lg overflow-x-auto">
+                    <table class="w-full text-sm custom-text table-lojas min-w-[1200px]">
+                        <thead id="lista-produtos-lojas-thead" class="sticky-header">
+                            </thead>
                         <tbody id="lista-produtos-lojas-tbody">
                             </tbody>
                     </table>

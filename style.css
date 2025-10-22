@@ -34,16 +34,74 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* Lojas - Tabela */
-.table-lojas th, .table-lojas td { padding: 8px 10px; border: 1px solid #334155; text-align: left; vertical-align: top; }
-.table-lojas th { background-color: #1E293B; font-size: 0.8rem; }
-.table-lojas input[type="number"] { width: 65px; padding: 4px; font-size: 0.8rem; text-align: right; }
+/* Lojas - Tabela (REFEITO) */
+.table-lojas th, .table-lojas td { 
+    padding: 10px 12px; /* Mais espaçamento */
+    border: 1px solid #334155; 
+    text-align: left; 
+    vertical-align: top; 
+    white-space: nowrap; /* Evita quebra de linha no header */
+}
+.table-lojas th { 
+    background-color: #1E293B; 
+    font-size: 0.8rem; 
+    text-transform: uppercase; /* Deixa o header mais limpo */
+}
+
+/* Célula de Loja (NOVO - para organizar Lucro/Margem/Preço) */
+.loja-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Espaço entre os elementos */
+}
+.loja-cell .lucro-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.loja-cell .lucro-input-group label {
+    font-size: 0.75rem; /* 12px */
+    color: #94a3b8; /* gray-400 */
+    flex-shrink: 0;
+}
+.table-lojas input[type="number"] { 
+    width: 75px; /* Um pouco maior */
+    padding: 6px; 
+    font-size: 0.8rem; 
+    text-align: right; 
+    background-color: #374151; /* gray-700 */
+    border: 1px solid #4B5563; /* gray-600 */
+    border-radius: 4px;
+}
+.table-lojas input[type="number"]:focus {
+    outline: none; 
+    border-color: #7F5AF0;
+}
+
+.loja-cell .stats {
+    font-size: 0.75rem; /* 12px */
+    color: #cbd5e1; /* gray-300 */
+}
+.loja-cell .preco-sugerido {
+    font-size: 0.95rem; /* 15px */
+    font-weight: 700;
+    color: #34d399; /* Corrigido para um verde (era green-400) */
+    margin-top: 2px;
+}
+
+/* Informações do Produto (Original) */
 .table-lojas .produto-info { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
 .table-lojas .produto-info img { width: 32px; height: 32px; object-cover: cover; border-radius: 4px; flex-shrink: 0;}
 .table-lojas .produto-info div { min-width: 0;} /* Evita que nome longo empurre */
 .table-lojas .produto-info p { margin: 0; line-height: 1.3; }
+
+/* Header Fixo e Scroll (Original) */
 .sticky-header th { position: sticky; top: 0; background-color: #16213E; z-index: 10; }
-#lista-produtos-lojas-container { max-height: calc(100vh - 250px); overflow-y: auto; } /* Scroll Tabela Lojas */
+#lista-produtos-lojas-container { 
+    max-height: calc(100vh - 250px); 
+    overflow-y: auto; 
+    /* overflow-x: auto; foi movido para o HTML */
+}
 
 /* Inputs gerais */
 .form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }

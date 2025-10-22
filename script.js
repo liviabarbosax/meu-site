@@ -13,11 +13,14 @@ let cotacaoAtual = null; // <- CORRIGIDO (Tirado da window)
 let modalAtual = null; // <- CORRIGIDO (Tirado da window)
 
 // --- Configurações de Lojas (Constante) ---
+// CORRIGIDO: Agora com todas as lojas e taxas corretas
 const lojasConfig = {
-    shopee: { nome: "Shopee", taxaFixa: 5.00, comissao: 0.20, logo: '🛒' },
-    amazon: { nome: "Amazon", taxaFixa: 2.00, comissao: 0.14, logo: '📦' },
-    ml_premium: { nome: "ML Premium", taxaFixa: 6.00, comissao: 0.165, logo: '🏪' },
-    tiktok: { nome: "TikTok Shop", taxaFixa: 2.00, comissao: 0.06, logo: '🎵' },
+    shopee: { nome: "Shopee", taxaFixa: 5.00, comissao: 0.20 }, // 20%
+    ml_premium: { nome: "ML Premium", taxaFixa: 6.00, comissao: 0.165 }, // 16.5%
+    amazon: { nome: "Amazon", taxaFixa: 2.00, comissao: 0.14 }, // 14%
+    tiktok: { nome: "TikTok Shop", taxaFixa: 2.00, comissao: 0.06 }, // 6%
+    facebook: { nome: "Facebook", taxaFixa: 0.00, comissao: 0.00 }, // Sem taxas
+    whatsapp: { nome: "WhatsApp", taxaFixa: 0.00, comissao: 0.00 }, // Sem taxas
 };
 
 // --- Função Helper para Salvar (NOVA) ---
@@ -529,61 +532,135 @@ function verDetalhesCotacao(id) {
 }
 
 // --- Lojas ---
+
+/**
+ * ATUALIZADO: Renderiza a tabela de lojas dinamicamente
+ * 1. Cria o cabeçalho (thead) com base na lojasConfig
+ * 2. Cria as linhas (tbody) para cada produto/kit
+ * 3. Adiciona os inputs de "Lucro R$" com R$10,00 padrão
+ */
 function renderizarProdutosLojas() {
-    const tbody = document.getElementById('lista-produtos-lojas-tbody'); 
-    const filtro = document.getElementById('filtro-lojas').value.toLowerCase(); 
-    tbody.innerHTML = ''; 
+    const thead = document.getElementById('lista-produtos-lojas-thead');
+    const tbody = document.getElementById('lista-produtos-lojas-tbody');
+    const filtro = document.getElementById('filtro-lojas').value.toLowerCase();
     const placeholder = document.getElementById('lojas-placeholder');
-    
+
+    // --- 1. Gerar Cabeçalho Dinâmico ---
+    thead.innerHTML = ''; // Limpa o cabeçalho estático antigo
+    let headerHTML = '<tr>';
+    headerHTML += '<th class="w-1/4">Produto / Kit</th>';
+    headerHTML += '<th class="w-[100px]">Custo Total</th>';
+
+    // Adiciona uma coluna de header para cada loja na config
+    Object.values(lojasConfig).forEach(loja => {
+        headerHTML += `<th>${loja.nome}</th>`;
+    });
+    headerHTML += '</tr>';
+    thead.innerHTML = headerHTML;
+
+    // --- 2. Gerar Corpo da Tabela ---
+    tbody.innerHTML = ''; // Limpa o corpo
+
     const itens = [
-        ...produtos.map(p => ({ ...p, isKit: false })), 
+        ...produtos.map(p => ({ ...p, isKit: false })),
         ...kits.map(k => ({ id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`, custo: k.custoTotal, picking: 0, precoVenda: k.precoVenda, imagem: null, isKit: true }))
     ];
-    
+
     const itensFiltrados = itens.filter(i => !filtro || i.nome.toLowerCase().includes(filtro) || i.sku.toLowerCase().includes(filtro));
-    
+
     placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
     if (itensFiltrados.length === 0) return;
 
     itensFiltrados.forEach(item => {
-        const custoTotal = item.custo + item.picking; 
-        const lucroDireto = item.precoVenda - custoTotal; 
-        const margemDireta = item.precoVenda > 0 ? (lucroDireto / item.precoVenda * 100) : 0;
-        
-        let rowHTML = `<tr data-item-id="${item.id}" data-is-kit="${item.isKit}"><td class="w-1/4"><div class="produto-info"><img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';"><div><p class="font-semibold text-white truncate">${item.nome}</p><p class="text-xs text-gray-400">SKU: ${item.sku}</p></div></div></td><td>${formatarMoeda(custoTotal)}</td>`;
-        
-        Object.entries(lojasConfig).forEach(([key, cfg]) => { 
-            rowHTML += `<td><label for="lucro-${key}-${item.id}" class="text-xs text-gray-400 block mb-1">Lucro R$</label><input type="number" step="0.01" value="10.00" id="lucro-${key}-${item.id}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit})" class="form-input p-1 text-sm bg-gray-800"><p class="text-xs mt-1">Mg: <span id="margem-${key}-${item.id}">0%</span></p><p class="text-green-400 font-bold text-sm mt-1" id="preco-${key}-${item.id}">R$ 0,00</p></td>`; 
+        // O Custo Total = Custo do produto + Custo de Picking/Packing
+        // Para Kits, o picking já está embutido no custoTotal do kit
+        const custoTotal = item.isKit ? item.custoTotal : (item.custo + item.picking);
+
+        let rowHTML = `<tr data-item-id="${item.id}" data-is-kit="${item.isKit}">`;
+
+        // Coluna 1: Produto Info
+        rowHTML += `<td class="w-1/4"><div class="produto-info"><img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';"><div><p class="font-semibold text-white truncate">${item.nome}</p><p class="text-xs text-gray-400">SKU: ${item.sku}</p></div></div></td>`;
+
+        // Coluna 2: Custo Total
+        rowHTML += `<td>${formatarMoeda(custoTotal)}</td>`;
+
+        // Colunas 3+: Lojas (Dinâmico)
+        Object.keys(lojasConfig).forEach(key => {
+            // ID único para cada célula (ex: shopee-12345-false)
+            const idBase = `${key}-${item.id}-${item.isKit}`; 
+            rowHTML += `
+                <td>
+                    <div class="loja-cell">
+                        <div class="lucro-input-group">
+                            <label for="lucro-${idBase}">Lucro</label>
+                            <input type="number" step="0.01" value="10.00" id="lucro-${idBase}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit}, '${key}')">
+                        </div>
+                        <div class="stats">
+                            <span>Mg: <span id="margem-${idBase}">0%</span></span>
+                        </div>
+                        <div class="preco-sugerido" id="preco-${idBase}">
+                            R$ 0,00
+                        </div>
+                    </div>
+                </td>`;
         });
-        
-        rowHTML += `<td><p class="text-xs text-gray-400">Lucro R$</p><p class="font-semibold">${formatarMoeda(lucroDireto)}</p><p class="text-xs mt-1">Mg: ${margemDireta.toFixed(1)}%</p><p class="text-green-400 font-bold text-sm mt-1">${formatarMoeda(item.precoVenda)}</p></td></tr>`;
-        
-        tbody.innerHTML += rowHTML; 
-        recalcularPrecosLoja(item.id, item.isKit);
+
+        rowHTML += `</tr>`;
+        tbody.innerHTML += rowHTML;
+
+        // Dispara o cálculo inicial (com R$10) para esta linha
+        Object.keys(lojasConfig).forEach(key => {
+            recalcularPrecosLoja(item.id, item.isKit, key);
+        });
     });
 }
-function recalcularPrecosLoja(itemId, isKit) {
-    const item = (isKit ? kits : produtos).find(i => i.id === itemId); 
+
+/**
+ * ATUALIZADO: Recalcula o preço de UMA loja específica quando o input "Lucro" é alterado.
+ */
+function recalcularPrecosLoja(itemId, isKit, lojaKey) {
+    // 1. Encontrar o item (produto ou kit)
+    const item = (isKit ? kits : produtos).find(i => i.id === itemId);
     if (!item) return;
-    
+
+    // 2. Encontrar a configuração da loja
+    const cfg = lojasConfig[lojaKey];
+    if (!cfg) return;
+
+    // 3. Calcular o custo total (Produto: Custo + Picking | Kit: CustoTotal)
     const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
-    
-    Object.entries(lojasConfig).forEach(([key, cfg]) => {
-        const lIn = document.getElementById(`lucro-${key}-${itemId}`); 
-        const mSp = document.getElementById(`margem-${key}-${itemId}`); 
-        const pSp = document.getElementById(`preco-${key}-${itemId}`); 
-        if (!lIn || !mSp || !pSp) return;
-        
-        const lDes = parseFloat(lIn.value) || 0; 
-        let pSug = 0; 
-        if (1 - cfg.comissao > 0) pSug = (custoTotal + cfg.taxaFixa + lDes) / (1 - cfg.comissao);
-        
-        const lReal = pSug * (1 - cfg.comissao) - cfg.taxaFixa - custoTotal; 
-        const mReal = pSug > 0 ? (lReal / pSug * 100) : 0;
-        
-        pSp.textContent = formatarMoeda(pSug); 
-        mSp.textContent = `${mReal.toFixed(1)}%`;
-    });
+
+    // 4. Pegar os elementos do DOM
+    const idBase = `${lojaKey}-${item.id}-${isKit}`;
+    const lucroInput = document.getElementById(`lucro-${idBase}`);
+    const margemSpan = document.getElementById(`margem-${idBase}`);
+    const precoSpan = document.getElementById(`preco-${idBase}`);
+
+    if (!lucroInput || !margemSpan || !precoSpan) return; // Sai se os elementos não existirem
+
+    // 5. Pegar o lucro desejado do input
+    const lucroDesejado = parseFloat(lucroInput.value) || 0;
+
+    // 6. --- O CÁLCULO MÁGICO ---
+    // Preço Sugerido = (Custos Totais + Lucro) / (1 - %Comissão)
+    let precoSugerido = 0;
+    const divisor = 1 - cfg.comissao;
+
+    if (divisor > 0) {
+        // Fórmula padrão para Shopee, ML, Amazon, TikTok
+        precoSugerido = (custoTotal + cfg.taxaFixa + lucroDesejado) / divisor;
+    } else {
+        // Fórmula para WhatsApp/Facebook (sem comissão)
+        precoSugerido = custoTotal + cfg.taxaFixa + lucroDesejado;
+    }
+
+    // 7. Calcular o lucro real e a margem com base no preço sugerido
+    const lucroReal = (precoSugerido * (1 - cfg.comissao)) - cfg.taxaFixa - custoTotal;
+    const margemReal = precoSugerido > 0 ? (lucroReal / precoSugerido * 100) : 0;
+
+    // 8. Atualizar a tela
+    precoSpan.textContent = formatarMoeda(precoSugerido);
+    margemSpan.textContent = `${margemReal.toFixed(1)}%`;
 }
 
 // --- Kits ---

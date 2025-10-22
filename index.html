@@ -4,113 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DropShip Pro v2.1 - Gestão Otimizada</title>
-    {/* Favicon (coloque o arquivo favicon.ico na pasta ou ajuste o href) */}
+    
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { box-sizing: border-box; }
-        .custom-bg { background-color: #1A1A2E; }
-        .custom-accent { background-color: #7F5AF0; }
-        .custom-accent-hover:hover { background-color: #6B46C1; }
-        .custom-text { color: #F0F0F0; }
-        .custom-sidebar { background-color: #16213E; }
-        .custom-card { background-color: #0F172A; border: 1px solid #334155; }
-        .nav-item { transition: all 0.3s ease; }
-        .nav-item:hover { background-color: #7F5AF0; transform: translateX(4px); }
-        .nav-item.active { background-color: #7F5AF0; border-right: 4px solid #00F5D4; }
-
-        /* Notificação */
-        .notification { position: fixed; top: 20px; right: 20px; z-index: 1050; transform: translateX(400px); transition: transform 0.3s ease; }
-        .notification.show { transform: translateX(0); }
-
-        /* Carrinho e Overlay */
-        #carrinho-painel {
-            position: fixed; top: 0; right: 0; width: 90%; /* Mobile */ max-width: 500px; /* Limite máximo */ height: 100%;
-            background-color: #16213E; box-shadow: -10px 0 20px rgba(0,0,0,0.3);
-            z-index: 1040; transform: translateX(100%); transition: transform 0.3s ease-out;
-            display: flex; flex-direction: column;
-        }
-        @media (min-width: 768px) { #carrinho-painel { width: 40%; } } /* Desktop */
-        #carrinho-painel.show { transform: translateX(0); }
-        #carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; } /* Scroll interno */
-        #carrinho-itens-lista { padding: 1rem; }
-        #carrinho-rodape { border-top: 1px solid #334155; padding: 1.5rem; background-color: #16213E; margin-top: auto; flex-shrink: 0; } /* Rodapé fixo no fim do scroll */
-
-        #carrinho-overlay {
-            position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1030;
-            opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none;
-        }
-        #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
-
-        /* Lojas - Tabela */
-        .table-lojas th, .table-lojas td { padding: 8px 10px; border: 1px solid #334155; text-align: left; vertical-align: top; }
-        .table-lojas th { background-color: #1E293B; font-size: 0.8rem; }
-        .table-lojas input[type="number"] { width: 65px; padding: 4px; font-size: 0.8rem; text-align: right; }
-        .table-lojas .produto-info { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-        .table-lojas .produto-info img { width: 32px; height: 32px; object-cover: cover; border-radius: 4px; flex-shrink: 0;}
-        .table-lojas .produto-info div { min-width: 0;} /* Evita que nome longo empurre */
-        .table-lojas .produto-info p { margin: 0; line-height: 1.3; }
-        .sticky-header th { position: sticky; top: 0; background-color: #16213E; z-index: 10; }
-        #lista-produtos-lojas-container { max-height: calc(100vh - 250px); overflow-y: auto; } /* Scroll Tabela Lojas */
-
-        /* Inputs gerais */
-        .form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }
-        .form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); } /* Estilo de foco */
-
-         /* Ajuste scroll main content */
-        main { height: 100vh; padding-bottom: 5rem;} /* Garante espaço no final */
-
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="custom-bg custom-text h-screen overflow-hidden"> {/* Evita scroll do body */}
+<body class="custom-bg custom-text h-screen overflow-hidden">
     <div class="flex h-full">
-        {/* Barra de Navegação Lateral */}
         <nav class="custom-sidebar w-64 h-full fixed left-0 top-0 overflow-y-auto z-20">
             <div class="p-6">
                 <h1 class="text-2xl font-bold text-white mb-2">DropShip Pro</h1>
                 <p class="text-xs text-gray-400 mb-8">v2.1 - Gestão Otimizada</p>
                 <ul class="space-y-2">
-                     <li> <a href="#" onclick="showPage('dashboard')" class="nav-item active flex items-center p-3 rounded-lg text-white"> <span class="mr-3">📊</span> Dashboard </a> </li>
-                     <li> <a href="#" onclick="showPage('produtos')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📦</span> Produtos </a> </li>
-                     <li> <a href="#" onclick="showPage('catalogo')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📋</span> Catálogo </a> </li>
-                     <li> <a href="#" onclick="showPage('cotacoes')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💰</span> Cotações </a> </li>
-                     <li> <a href="#" onclick="showPage('lojas')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🏪</span> Lojas </a> </li>
-                     <li> <a href="#" onclick="showPage('kits')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🧩</span> Kits </a> </li>
-                     <li> <a href="#" onclick="showPage('financeiro')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💳</span> Financeiro </a> </li>
-                     <li> <a href="#" onclick="showPage('marketing')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🎫</span> Marketing </a> </li>
-                 </ul>
+                    <li> <a href="#" onclick="showPage('dashboard')" class="nav-item active flex items-center p-3 rounded-lg text-white"> <span class="mr-3">📊</span> Dashboard </a> </li>
+                    <li> <a href="#" onclick="showPage('produtos')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📦</span> Produtos </a> </li>
+                    <li> <a href="#" onclick="showPage('catalogo')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📋</span> Catálogo </a> </li>
+                    <li> <a href="#" onclick="showPage('cotacoes')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💰</span> Cotações </a> </li>
+                    <li> <a href="#" onclick="showPage('lojas')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🏪</span> Lojas </a> </li>
+                    <li> <a href="#" onclick="showPage('kits')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🧩</span> Kits </a> </li>
+                    <li> <a href="#" onclick="showPage('financeiro')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💳</span> Financeiro </a> </li>
+                    <li> <a href="#" onclick="showPage('marketing')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🎫</span> Marketing </a> </li>
+                </ul>
             </div>
         </nav>
-        {/* Área de Conteúdo Principal */}
-        <main class="ml-64 flex-1 p-8 overflow-y-auto"> {/* Scroll na área principal */}
-            {/* Página Dashboard */}
+        
+        <main class="ml-64 flex-1 p-8 overflow-y-auto">
             <div id="dashboard-page" class="page-content">
                 <h2 class="text-3xl font-bold mb-8 text-white">📊 Dashboard</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Vendas Convertidas (Mês)</h4> <p id="dash-vendas-mes" class="text-3xl font-bold text-green-400">R$ 0,00</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Lucro Estimado (Mês)</h4> <p id="dash-lucro-mes" class="text-3xl font-bold text-purple-400">R$ 0,00</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Cotações Pendentes</h4> <p id="dash-cotacoes-pendentes" class="text-3xl font-bold text-yellow-400">0</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Total de Produtos</h4> <p id="dash-total-produtos" class="text-3xl font-bold text-blue-400">0</p> </div>
-                 </div>
-                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                     <div class="lg:col-span-2 custom-card p-6 rounded-lg"> <h3 class="text-xl font-semibold text-white mb-4">Cotações Pendentes Recentes</h3> <div id="dash-lista-cotacoes" class="space-y-4 max-h-96 overflow-y-auto"></div> </div>
-                     <div class="custom-card p-6 rounded-lg">
-                         <h3 class="text-xl font-semibold text-white mb-4">🚀 Atalhos Rápidos</h3>
-                         <div class="space-y-3">
-                             <button onclick="irParaCadastroProduto()" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">📦</span> Cadastrar Novo Produto </button>
-                             <button onclick="showPage('catalogo')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">📋</span> Ver Catálogo </button>
-                             <button onclick="abrirCarrinho()" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">🛒</span> Iniciar Nova Cotação </button>
-                             <button onclick="showPage('cotacoes')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">💰</span> Ver Histórico de Cotações </button>
-                         </div>
-                     </div>
-                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Vendas Convertidas (Mês)</h4> <p id="dash-vendas-mes" class="text-3xl font-bold text-green-400">R$ 0,00</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Lucro Estimado (Mês)</h4> <p id="dash-lucro-mes" class="text-3xl font-bold text-purple-400">R$ 0,00</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Cotações Pendentes</h4> <p id="dash-cotacoes-pendentes" class="text-3xl font-bold text-yellow-400">0</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Total de Produtos</h4> <p id="dash-total-produtos" class="text-3xl font-bold text-blue-400">0</p> </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 custom-card p-6 rounded-lg"> <h3 class="text-xl font-semibold text-white mb-4">Cotações Pendentes Recentes</h3> <div id="dash-lista-cotacoes" class="space-y-4 max-h-96 overflow-y-auto"></div> </div>
+                    <div class="custom-card p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-white mb-4">🚀 Atalhos Rápidos</h3>
+                        <div class="space-y-3">
+                            <button onclick="irParaCadastroProduto()" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">📦</span> Cadastrar Novo Produto </button>
+                            <button onclick="showPage('catalogo')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">📋</span> Ver Catálogo </button>
+                            <button onclick="abrirCarrinho()" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">🛒</span> Iniciar Nova Cotação </button>
+                            <button onclick="showPage('cotacoes')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg flex items-center"> <span class="mr-3">💰</span> Ver Histórico de Cotações </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Página Produtos */}
             <div id="produtos-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">Gestão de Produtos</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Coluna Principal: Cadastrar/Editar Produto */}
                     <div class="lg:col-span-2 custom-card rounded-lg p-6">
                         <h3 id="produto-form-titulo" class="text-xl font-semibold mb-6 text-white flex items-center"><span class="mr-2">📦</span>Cadastrar Novo Produto</h3>
                         <form id="produto-form" class="space-y-4">
@@ -140,13 +85,12 @@
                                 <div><label for="produto-largura" class="block text-sm font-medium mb-2">Largura (cm)</label><input type="number" id="produto-largura" value="0" class="form-input"></div>
                                 <div><label for="produto-altura" class="block text-sm font-medium mb-2">Altura (cm)</label><input type="number" id="produto-altura" value="0" class="form-input"></div>
                             </div>
-                             <div class="flex gap-3 pt-4">
+                            <div class="flex gap-3 pt-4">
                                 <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-4 rounded-lg font-medium">💾 Salvar Produto</button>
                                 <button type="button" onclick="limparFormularioProduto()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium">Cancelar Edição</button>
                             </div>
                         </form>
                     </div>
-                    {/* Coluna Lateral: Gerenciar Fornecedores */}
                     <div class="lg:col-span-1 custom-card rounded-lg p-6 self-start">
                         <h3 class="text-xl font-semibold mb-6 text-white flex items-center"><span class="mr-2">🏢</span>Fornecedores</h3>
                         <div class="space-y-4">
@@ -161,61 +105,56 @@
                 </div>
             </div>
 
-            {/* Página Catálogo */}
             <div id="catalogo-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">📋 Catálogo</h2>
-                 <div class="custom-card rounded-lg p-6 mb-8">
-                     <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtros de Busca</h3>
-                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                         <input type="text" id="filtro-busca" placeholder="Buscar por nome ou SKU..." class="md:col-span-2 form-input">
-                         <select id="filtro-categoria" class="form-input"> <option value="">Todas as categorias</option> </select>
-                         <select id="filtro-fornecedor" class="form-input"> <option value="">Todos os fornecedores</option> </select>
-                     </div>
-                     <div class="flex gap-4 mt-4">
-                         <button onclick="aplicarFiltros()" class="custom-accent custom-accent-hover text-white px-5 py-2 rounded-lg font-medium">Buscar</button>
-                         <button onclick="limparFiltros()" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg font-medium">Limpar</button>
-                     </div>
-                 </div>
-                 <div id="catalogo-lista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                     {/* Cards do catálogo */}
-                 </div>
+                <div class="custom-card rounded-lg p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtros de Busca</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="filtro-busca" placeholder="Buscar por nome ou SKU..." class="md:col-span-2 form-input">
+                        <select id="filtro-categoria" class="form-input"> <option value="">Todas as categorias</option> </select>
+                        <select id="filtro-fornecedor" class="form-input"> <option value="">Todos os fornecedores</option> </select>
+                    </div>
+                    <div class="flex gap-4 mt-4">
+                        <button onclick="aplicarFiltros()" class="custom-accent custom-accent-hover text-white px-5 py-2 rounded-lg font-medium">Buscar</button>
+                        <button onclick="limparFiltros()" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg font-medium">Limpar</button>
+                    </div>
+                </div>
+                <div id="catalogo-lista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    </div>
             </div>
 
-            {/* Página Cotações */}
             <div id="cotacoes-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">💰 Acompanhe suas Cotações</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"> {/* Ajustado para 2 colunas em md */}
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Total</h4> <p id="stat-total" class="text-3xl font-bold text-white">0</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Pendentes</h4> <p id="stat-pendente" class="text-3xl font-bold text-yellow-400">0</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Convertidas</h4> <p id="stat-convertida" class="text-3xl font-bold text-green-400">0</p> </div>
-                     <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Conversão</h4> <p id="stat-taxa" class="text-3xl font-bold text-blue-400">0%</p> </div>
-                 </div>
-                 <div class="custom-card p-6 rounded-lg">
-                     <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                         <h3 class="text-xl font-semibold text-white">Histórico de Cotações</h3>
-                         <select id="filtro-status-cotacao" class="w-full sm:w-auto form-input p-2 text-sm"> {/* Melhorado responsividade */}
-                             <option value="Todos">Todos status</option> <option value="Pendente">Pendentes</option> <option value="Convertida">Convertidas</option>
-                         </select>
-                     </div>
-                     <div id="lista-cotacoes" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">{/* Scroll + padding */}
-                         {/* Cotações renderizadas aqui */}
-                     </div>
-                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Total</h4> <p id="stat-total" class="text-3xl font-bold text-white">0</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Pendentes</h4> <p id="stat-pendente" class="text-3xl font-bold text-yellow-400">0</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Convertidas</h4> <p id="stat-convertida" class="text-3xl font-bold text-green-400">0</p> </div>
+                    <div class="custom-card p-6 rounded-lg"> <h4 class="text-gray-400 text-sm font-medium">Conversão</h4> <p id="stat-taxa" class="text-3xl font-bold text-blue-400">0%</p> </div>
+                </div>
+                <div class="custom-card p-6 rounded-lg">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        <h3 class="text-xl font-semibold text-white">Histórico de Cotações</h3>
+                        <select id="filtro-status-cotacao" class="w-full sm:w-auto form-input p-2 text-sm">
+                            <option value="Todos">Todos status</option> <option value="Pendente">Pendentes</option> <option value="Convertida">Convertidas</option>
+                        </select>
+                    </div>
+                    <div id="lista-cotacoes" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        </div>
+                </div>
             </div>
-            {/* Página Lojas */}
+            
             <div id="lojas-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">🏪 Precificação por Loja</h2>
                 <div class="custom-card rounded-lg p-6 mb-6">
-                     <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtro</h3>
-                     <input type="text" id="filtro-lojas" placeholder="Buscar produto ou kit por nome/SKU..." class="form-input w-full md:w-1/2">
+                    <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtro</h3>
+                    <input type="text" id="filtro-lojas" placeholder="Buscar produto ou kit por nome/SKU..." class="form-input w-full md:w-1/2">
                 </div>
                 <div id="lista-produtos-lojas-container" class="custom-card rounded-lg overflow-hidden">
-                    <table class="w-full text-sm custom-text table-lojas min-w-[800px]"> {/* min-width para evitar quebra */}
+                    <table class="w-full text-sm custom-text table-lojas min-w-[800px]">
                         <thead class="sticky-header">
                             <tr>
                                 <th class="w-1/4">Produto / Kit</th>
-                                <th class="w-[100px]">Custo Total</th> {/* Largura fixa */}
-                                {/* Colunas das lojas geradas dinamicamente */}
+                                <th class="w-[100px]">Custo Total</th>
                                 <th class="w-[150px]">Shopee</th>
                                 <th class="w-[150px]">Amazon</th>
                                 <th class="w-[150px]">ML Premium</th>
@@ -224,435 +163,179 @@
                             </tr>
                         </thead>
                         <tbody id="lista-produtos-lojas-tbody">
-                            {/* Linhas da tabela */}
-                        </tbody>
+                            </tbody>
                     </table>
-                     <div id="lojas-placeholder" class="text-center text-gray-400 py-10 hidden">Nenhum item encontrado.</div>
+                    <div id="lojas-placeholder" class="text-center text-gray-400 py-10 hidden">Nenhum item encontrado.</div>
                 </div>
             </div>
 
-            {/* Página Kits */}
             <div id="kits-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">🧩 Kits e Estratégias</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Formulário */}
                     <div class="lg:col-span-1 custom-card rounded-lg p-6 self-start">
-                         <h3 id="kit-form-titulo" class="text-xl font-semibold mb-6 text-white">🧩 Novo Kit</h3>
-                         <form id="kit-form" class="space-y-4">
-                             <input type="hidden" id="kit-id">
-                             <div><label for="kit-nome" class="block text-sm font-medium mb-1">Nome do Kit *</label><input type="text" id="kit-nome" required placeholder="Ex: Kit Cozinha Completa" class="form-input text-sm"></div>
-                             <div>
-                                 <label class="block text-sm font-medium mb-1">Adicionar Produtos *</label>
-                                 <input type="text" id="filtro-produtos-kit" placeholder="Buscar produto..." class="form-input text-sm mb-2">
-                                 <select id="kit-produtos-select" class="form-input text-sm mb-2"><option value="">Selecione...</option></select>
-                                 <button type="button" onclick="adicionarProdutoAoKit()" class="custom-accent custom-accent-hover text-white px-3 py-1.5 rounded-lg font-medium text-xs w-full">➕ Adicionar Selecionado</button>
-                             </div>
-                             <div id="kit-produtos-lista" class="space-y-1 mt-2 max-h-40 overflow-y-auto bg-gray-800 p-2 rounded border border-gray-600"><p class="text-gray-400 text-center text-xs">Produtos adicionados.</p></div>
-                             <div>
-                                 <label for="kit-preco-venda" class="block text-sm font-medium mb-1">Preço Venda Direta (R$) *</label>
-                                 <input type="number" id="kit-preco-venda" step="0.01" required value="0.00" class="form-input text-sm">
-                                 <p class="text-xs text-gray-400 mt-1">Custo Total: <span id="kit-custo-total">R$ 0,00</span></p>
-                                 <p class="text-xs text-purple-400 mt-1">Preços por loja na Aba Lojas.</p>
-                             </div>
-                             <div class="flex gap-3 pt-2">
-                                 <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">💾 Salvar</button>
-                                 <button type="button" onclick="limparFormularioKit()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg font-medium text-sm">Cancelar</button>
-                             </div>
-                         </form>
+                        <h3 id="kit-form-titulo" class="text-xl font-semibold mb-6 text-white">🧩 Novo Kit</h3>
+                        <form id="kit-form" class="space-y-4">
+                            <input type="hidden" id="kit-id">
+                            <div><label for="kit-nome" class="block text-sm font-medium mb-1">Nome do Kit *</label><input type="text" id="kit-nome" required placeholder="Ex: Kit Cozinha Completa" class="form-input text-sm"></div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Adicionar Produtos *</label>
+                                <input type="text" id="filtro-produtos-kit" placeholder="Buscar produto..." class="form-input text-sm mb-2">
+                                <select id="kit-produtos-select" class="form-input text-sm mb-2"><option value="">Selecione...</option></select>
+                                <button type="button" onclick="adicionarProdutoAoKit()" class="custom-accent custom-accent-hover text-white px-3 py-1.5 rounded-lg font-medium text-xs w-full">➕ Adicionar Selecionado</button>
+                            </div>
+                            <div id="kit-produtos-lista" class="space-y-1 mt-2 max-h-40 overflow-y-auto bg-gray-800 p-2 rounded border border-gray-600"><p class="text-gray-400 text-center text-xs">Produtos adicionados.</p></div>
+                            <div>
+                                <label for="kit-preco-venda" class="block text-sm font-medium mb-1">Preço Venda Direta (R$) *</label>
+                                <input type="number" id="kit-preco-venda" step="0.01" required value="0.00" class="form-input text-sm">
+                                <p class="text-xs text-gray-400 mt-1">Custo Total: <span id="kit-custo-total">R$ 0,00</span></p>
+                                <p class="text-xs text-purple-400 mt-1">Preços por loja na Aba Lojas.</p>
+                            </div>
+                            <div class="flex gap-3 pt-2">
+                                <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">💾 Salvar</button>
+                                <button type="button" onclick="limparFormularioKit()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg font-medium text-sm">Cancelar</button>
+                            </div>
+                        </form>
                     </div>
-                    {/* Lista */}
                     <div class="lg:col-span-2 custom-card rounded-lg p-6">
-                         <h3 class="text-xl font-semibold mb-6 text-white">Seus Kits Cadastrados</h3>
-                         <input type="text" id="filtro-kits" placeholder="Buscar kit por nome..." class="form-input mb-4 w-full md:w-1/2 text-sm">
-                         <div id="kits-lista-container" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                             <p class="text-gray-400 text-center py-10">Nenhum kit encontrado.</p>
-                         </div>
+                        <h3 class="text-xl font-semibold mb-6 text-white">Seus Kits Cadastrados</h3>
+                        <input type="text" id="filtro-kits" placeholder="Buscar kit por nome..." class="form-input mb-4 w-full md:w-1/2 text-sm">
+                        <div id="kits-lista-container" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                            <p class="text-gray-400 text-center py-10">Nenhum kit encontrado.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Página Financeiro */}
             <div id="financeiro-page" class="page-content hidden">
-                 <h2 class="text-3xl font-bold mb-8 text-white">💵 Gestão Financeira</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                     <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">📈 Vendas Hoje</h4> <p id="financeiro-vendas-hoje" class="text-4xl font-bold text-green-400">R$ 0,00</p> </div>
-                     <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">📊 Vendas Mês</h4> <p id="financeiro-vendas-mes" class="text-4xl font-bold text-blue-400">R$ 0,00</p> </div>
-                     <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">💰 Lucro Total</h4> <p id="financeiro-lucro-total" class="text-4xl font-bold text-purple-400">R$ 0,00</p> </div>
-                 </div>
-                 <div class="custom-card p-6 rounded-lg mb-8">
-                     <h3 class="text-xl font-semibold text-white mb-6">Relatórios e Metas</h3>
-                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                         <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">📊</span> Vendas</button>
-                         <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">💰</span> Lucros</button>
-                         <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">📈</span> Crescimento</button>
-                         <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">🎯</span> Metas</button>
-                     </div>
-                     <p class="text-gray-400 text-center mt-6 text-sm">Funcionalidades avançadas de relatórios e metas estão em desenvolvimento.</p>
-                 </div>
-                 <div class="custom-card p-6 rounded-lg">
-                     <h3 class="text-xl font-semibold text-white mb-6">🗓️ Fechamento do Mês</h3>
-                     <p class="text-gray-400 mb-4 text-sm">Ferramentas para consolidar e analisar os resultados mensais.</p>
-                     <button disabled class="custom-accent text-gray-300 opacity-50 cursor-not-allowed font-medium py-3 px-6 rounded-lg">Iniciar Fechamento Mensal</button>
-                     <p class="text-gray-400 text-center mt-4 text-sm">Funcionalidade de fechamento mensal está em desenvolvimento.</p>
-                 </div>
+                <h2 class="text-3xl font-bold mb-8 text-white">💵 Gestão Financeira</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">📈 Vendas Hoje</h4> <p id="financeiro-vendas-hoje" class="text-4xl font-bold text-green-400">R$ 0,00</p> </div>
+                    <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">📊 Vendas Mês</h4> <p id="financeiro-vendas-mes" class="text-4xl font-bold text-blue-400">R$ 0,00</p> </div>
+                    <div class="custom-card p-6 rounded-lg text-center"> <h4 class="text-gray-400 text-lg font-medium mb-2">💰 Lucro Total</h4> <p id="financeiro-lucro-total" class="text-4xl font-bold text-purple-400">R$ 0,00</p> </div>
+                </div>
+                <div class="custom-card p-6 rounded-lg mb-8">
+                    <h3 class="text-xl font-semibold text-white mb-6">Relatórios e Metas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">📊</span> Vendas</button>
+                        <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">💰</span> Lucros</button>
+                        <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">📈</span> Crescimento</button>
+                        <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-4 px-6 rounded-lg flex items-center justify-center text-lg"><span class="mr-2">🎯</span> Metas</button>
+                    </div>
+                    <p class="text-gray-400 text-center mt-6 text-sm">Funcionalidades avançadas de relatórios e metas estão em desenvolvimento.</p>
+                </div>
+                <div class="custom-card p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold text-white mb-6">🗓️ Fechamento do Mês</h3>
+                    <p class="text-gray-400 mb-4 text-sm">Ferramentas para consolidar e analisar os resultados mensais.</p>
+                    <button disabled class="custom-accent text-gray-300 opacity-50 cursor-not-allowed font-medium py-3 px-6 rounded-lg">Iniciar Fechamento Mensal</button>
+                    <p class="text-gray-400 text-center mt-4 text-sm">Funcionalidade de fechamento mensal está em desenvolvimento.</p>
+                </div>
             </div>
 
-            {/* Página Marketing */}
             <div id="marketing-page" class="page-content hidden">
-                 <h2 class="text-3xl font-bold mb-8 text-white">🎫 Marketing & Cupons</h2>
-                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                     <div class="lg:col-span-2 space-y-8">
-                         <div class="custom-card p-6 rounded-lg">
-                             <h3 class="text-xl font-semibold text-white mb-4">🎫 Visão Geral</h3>
-                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                                 <div><p class="text-gray-400 text-xs">Total Cupons</p><p id="stat-cupom-total" class="text-2xl font-bold text-white">0</p></div>
-                                 <div><p class="text-gray-400 text-xs">Fixos (R$)</p><p id="stat-cupom-fixo" class="text-2xl font-bold text-blue-400">0</p></div>
-                                 <div><p class="text-gray-400 text-xs">Percentuais (%)</p><p id="stat-cupom-percentual" class="text-2xl font-bold text-green-400">0</p></div>
-                                 <div><p class="text-gray-400 text-xs">Usos Registrados</p><p id="stat-cupom-usos" class="text-2xl font-bold text-yellow-400">0</p></div>
-                             </div>
-                         </div>
-                         <div class="custom-card p-6 rounded-lg">
-                             <h3 class="text-xl font-semibold text-white mb-4">📋 Cupons Cadastrados</h3>
-                             <input type="text" id="filtro-cupons" placeholder="Buscar cupom por código..." class="form-input text-sm mb-4 w-full md:w-1/2">
-                             <div id="lista-cupons" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                                 <p class="text-gray-400 text-center py-10">🎫 Nenhum cupom cadastrado.</p>
-                             </div>
-                         </div>
-                     </div>
-                     <div class="custom-card rounded-lg p-6 self-start">
-                         <h3 id="cupom-form-titulo" class="text-xl font-semibold mb-6 text-white">🎫 Novo Cupom</h3>
-                         <form id="cupom-form" class="space-y-4">
-                             <input type="hidden" id="cupom-id">
-                             <div><label for="cupom-codigo" class="block text-sm font-medium mb-1">Código *</label><input type="text" id="cupom-codigo" required placeholder="Ex: BEMVINDO10" class="form-input text-sm uppercase"></div>
-                             <div><label for="cupom-tipo" class="block text-sm font-medium mb-1">Tipo *</label><select id="cupom-tipo" required class="form-input text-sm"><option value="">Selecione</option><option value="fixo">Valor Fixo (R$)</option><option value="percentual">Percentual (%)</option></select></div>
-                             <div><label for="cupom-valor" class="block text-sm font-medium mb-1">Valor *</label><input type="number" id="cupom-valor" step="0.01" required placeholder="Ex: 10.00 ou 15" class="form-input text-sm"></div>
-                             <div><label for="cupom-usos" class="block text-sm font-medium mb-1">Limite Usos (0=ilimitado)</label><input type="number" id="cupom-usos" value="0" step="1" min="0" class="form-input text-sm"></div>
-                             <div class="flex items-center"><input type="checkbox" id="cupom-ativo" checked class="h-4 w-4 text-purple-600 border-gray-500 rounded focus:ring-purple-500 mr-2"><label for="cupom-ativo" class="text-sm font-medium">Cupom Ativo</label></div>
-                             <div class="flex gap-3 pt-2">
-                                 <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">💾 Salvar</button>
-                                 <button type="button" onclick="limparFormularioCupom()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg font-medium text-sm">Cancelar</button>
-                             </div>
-                         </form>
-                     </div>
-                 </div>
-                 <div class="custom-card p-6 rounded-lg mt-8">
-                     <h3 class="text-xl font-semibold text-white mb-6">📢 Gerenciar Campanhas</h3>
-                     <p class="text-gray-400 mb-4 text-sm">Acompanhe campanhas de marketing e seus resultados.</p>
-                     <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-3 px-6 rounded-lg">Ver Campanhas</button>
-                     <p class="text-gray-400 text-center mt-4 text-sm">Funcionalidade de campanhas está em desenvolvimento.</p>
-                 </div>
+                <h2 class="text-3xl font-bold mb-8 text-white">🎫 Marketing & Cupons</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-8">
+                        <div class="custom-card p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-white mb-4">🎫 Visão Geral</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div><p class="text-gray-400 text-xs">Total Cupons</p><p id="stat-cupom-total" class="text-2xl font-bold text-white">0</p></div>
+                                <div><p class="text-gray-400 text-xs">Fixos (R$)</p><p id="stat-cupom-fixo" class="text-2xl font-bold text-blue-400">0</p></div>
+                                <div><p class="text-gray-400 text-xs">Percentuais (%)</p><p id="stat-cupom-percentual" class="text-2xl font-bold text-green-400">0</p></div>
+                                <div><p class="text-gray-400 text-xs">Usos Registrados</p><p id="stat-cupom-usos" class="text-2xl font-bold text-yellow-400">0</p></div>
+                            </div>
+                        </div>
+                        <div class="custom-card p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-white mb-4">📋 Cupons Cadastrados</h3>
+                            <input type="text" id="filtro-cupons" placeholder="Buscar cupom por código..." class="form-input text-sm mb-4 w-full md:w-1/2">
+                            <div id="lista-cupons" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                                <p class="text-gray-400 text-center py-10">🎫 Nenhum cupom cadastrado.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="custom-card rounded-lg p-6 self-start">
+                        <h3 id="cupom-form-titulo" class="text-xl font-semibold mb-6 text-white">🎫 Novo Cupom</h3>
+                        <form id="cupom-form" class="space-y-4">
+                            <input type="hidden" id="cupom-id">
+                            <div><label for="cupom-codigo" class="block text-sm font-medium mb-1">Código *</label><input type="text" id="cupom-codigo" required placeholder="Ex: BEMVINDO10" class="form-input text-sm uppercase"></div>
+                            <div><label for="cupom-tipo" class="block text-sm font-medium mb-1">Tipo *</label><select id="cupom-tipo" required class="form-input text-sm"><option value="">Selecione</option><option value="fixo">Valor Fixo (R$)</option><option value="percentual">Percentual (%)</option></select></div>
+                            <div><label for="cupom-valor" class="block text-sm font-medium mb-1">Valor *</label><input type="number" id="cupom-valor" step="0.01" required placeholder="Ex: 10.00 ou 15" class="form-input text-sm"></div>
+                            <div><label for="cupom-usos" class="block text-sm font-medium mb-1">Limite Usos (0=ilimitado)</label><input type="number" id="cupom-usos" value="0" step="1" min="0" class="form-input text-sm"></div>
+                            <div class="flex items-center"><input type="checkbox" id="cupom-ativo" checked class="h-4 w-4 text-purple-600 border-gray-500 rounded focus:ring-purple-500 mr-2"><label for="cupom-ativo" class="text-sm font-medium">Cupom Ativo</label></div>
+                            <div class="flex gap-3 pt-2">
+                                <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">💾 Salvar</button>
+                                <button type="button" onclick="limparFormularioCupom()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg font-medium text-sm">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="custom-card p-6 rounded-lg mt-8">
+                    <h3 class="text-xl font-semibold text-white mb-6">📢 Gerenciar Campanhas</h3>
+                    <p class="text-gray-400 mb-4 text-sm">Acompanhe campanhas de marketing e seus resultados.</p>
+                    <button disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-medium py-3 px-6 rounded-lg">Ver Campanhas</button>
+                    <p class="text-gray-400 text-center mt-4 text-sm">Funcionalidade de campanhas está em desenvolvimento.</p>
+                </div>
             </div>
         </main>
-        </div> {/* Fim da div flex principal */}
+    </div> <div id="carrinho-overlay" onclick="fecharCarrinho()"></div>
 
-    {/* Overlay para fechar carrinho */}
-    <div id="carrinho-overlay" onclick="fecharCarrinho()"></div>
-
-    {/* Notificação */}
     <div id="notification" class="notification bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
         <span id="notification-text"></span>
     </div>
 
-    {/* Botão Flutuante Carrinho */}
     <button onclick="abrirCarrinho()" class="fixed bottom-8 right-8 custom-accent custom-accent-hover text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl z-[1035]">
         🛒
         <span id="carrinho-contador" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
     </button>
 
-    {/* Painel do Carrinho */}
     <aside id="carrinho-painel">
         <div class="flex justify-between items-center p-6 border-b border-gray-700 flex-shrink-0">
             <h3 class="text-2xl font-bold text-white">🛒 Carrinho</h3>
             <button onclick="fecharCarrinho()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
         </div>
-        {/* Scroll Interno */}
         <div id="carrinho-conteudo-scroll">
-            <div id="carrinho-itens-lista" class="flex-grow"> {/* Itens aqui */} </div>
-            {/* Rodapé fixo dentro do scroll */}
+            <div id="carrinho-itens-lista" class="flex-grow"> </div>
             <div id="carrinho-rodape">
-                 <div class="grid grid-cols-2 gap-4">
-                     <div><label for="carrinho-descontos" class="block text-xs font-medium mb-1">Descontos (R$)</label><input type="number" id="carrinho-descontos" value="0" step="0.01" class="form-input text-sm p-2"></div>
-                     <div><label for="carrinho-frete" class="block text-xs font-medium mb-1">Frete (R$)</label><input type="number" id="carrinho-frete" value="0" step="0.01" class="form-input text-sm p-2"></div>
-                 </div>
-                 <div id="carrinho-totais" class="space-y-1 text-base my-3"> {/* Ajustado espaçamento/tamanho */}
-                     <div class="flex justify-between"><span>Subtotal:</span><span id="total-subtotal" class="font-semibold">R$ 0,00</span></div>
-                     <div class="flex justify-between text-yellow-400"><span>Descontos:</span><span id="total-descontos" class="font-semibold">- R$ 0,00</span></div>
-                     <div class="flex justify-between"><span>Frete:</span><span id="total-frete" class="font-semibold">R$ 0,00</span></div>
-                     <hr class="border-gray-600 my-1.5">
-                     <div class="flex justify-between text-xl text-white font-bold"><span>Total:</span><span id="total-geral" class="text-green-400">R$ 0,00</span></div>
-                 </div>
-                 <hr class="border-gray-600 my-3">
-                 <div class="custom-card rounded-lg p-4 mb-4">
-                     <h4 class="text-base font-semibold mb-2 text-white">👤 Dados Cliente</h4>
-                     <div class="space-y-2">
-                         <input type="text" id="cliente-nome" placeholder="Nome Cliente" class="form-input text-sm p-2">
-                         <input type="text" id="cliente-whatsapp" placeholder="WhatsApp (Ex: 119...)" class="form-input text-sm p-2">
-                         <div class="grid grid-cols-2 gap-2">
-                             <input type="text" id="cliente-cidade" placeholder="Cidade" class="form-input text-sm p-2">
-                             <input type="text" id="cliente-estado" placeholder="UF" class="form-input text-sm p-2">
-                         </div>
-                         <div>
-                             <label for="cliente-validade" class="block text-xs font-medium mb-1">Validade</label>
-                             <select id="cliente-validade" class="form-input text-sm p-2"><option value="3">3 dias</option><option value="5">5 dias</option><option value="7">7 dias</option><option value="15">15 dias</option></select>
-                         </div>
-                         <button onclick="gerarResumoWhatsapp()" class="w-full custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">✉️ Gerar Resumo</button>
-                     </div>
-                 </div>
-                 <div id="resumo-container" class="custom-card rounded-lg p-4 mb-4 hidden">
-                     <h4 class="text-base font-semibold mb-2 text-white">📄 Resumo WhatsApp</h4>
-                     <textarea id="resumo-whatsapp" rows="8" class="form-input bg-gray-800 text-xs p-2" readonly></textarea>
-                     <div class="flex gap-2 mt-2">
-                         <button onclick="copiarResumo()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1.5 px-3 rounded-lg font-medium text-xs">📋 Copiar</button>
-                         <button onclick="salvarCotacao()" class="flex-1 custom-accent custom-accent-hover text-white py-1.5 px-3 rounded-lg font-medium text-xs">💾 Salvar Cotação</button>
-                     </div>
-                 </div>
-                 <button onclick="limparCarrinho()" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium flex items-center justify-center text-sm"><span class="mr-1">🗑️</span> Limpar Carrinho</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label for="carrinho-descontos" class="block text-xs font-medium mb-1">Descontos (R$)</label><input type="number" id="carrinho-descontos" value="0" step="0.01" class="form-input text-sm p-2"></div>
+                    <div><label for="carrinho-frete" class="block text-xs font-medium mb-1">Frete (R$)</label><input type="number" id="carrinho-frete" value="0" step="0.01" class="form-input text-sm p-2"></div>
+                </div>
+                <div id="carrinho-totais" class="space-y-1 text-base my-3">
+                    <div class="flex justify-between"><span>Subtotal:</span><span id="total-subtotal" class="font-semibold">R$ 0,00</span></div>
+                    <div class="flex justify-between text-yellow-400"><span>Descontos:</span><span id="total-descontos" class="font-semibold">- R$ 0,00</span></div>
+                    <div class="flex justify-between"><span>Frete:</span><span id="total-frete" class="font-semibold">R$ 0,00</span></div>
+                    <hr class="border-gray-600 my-1.5">
+                    <div class="flex justify-between text-xl text-white font-bold"><span>Total:</span><span id="total-geral" class="text-green-400">R$ 0,00</span></div>
+                </div>
+                <hr class="border-gray-600 my-3">
+                <div class="custom-card rounded-lg p-4 mb-4">
+                    <h4 class="text-base font-semibold mb-2 text-white">👤 Dados Cliente</h4>
+                    <div class="space-y-2">
+                        <input type="text" id="cliente-nome" placeholder="Nome Cliente" class="form-input text-sm p-2">
+                        <input type="text" id="cliente-whatsapp" placeholder="WhatsApp (Ex: 119...)" class="form-input text-sm p-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="cliente-cidade" placeholder="Cidade" class="form-input text-sm p-2">
+                            <input type="text" id="cliente-estado" placeholder="UF" class="form-input text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="cliente-validade" class="block text-xs font-medium mb-1">Validade</label>
+                            <select id="cliente-validade" class="form-input text-sm p-2"><option value="3">3 dias</option><option value="5">5 dias</option><option value="7">7 dias</option><option value="15">15 dias</option></select>
+                        </div>
+                        <button onclick="gerarResumoWhatsapp()" class="w-full custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">✉️ Gerar Resumo</button>
+                    </div>
+                </div>
+                <div id="resumo-container" class="custom-card rounded-lg p-4 mb-4 hidden">
+                    <h4 class="text-base font-semibold mb-2 text-white">📄 Resumo WhatsApp</h4>
+                    <textarea id="resumo-whatsapp" rows="8" class="form-input bg-gray-800 text-xs p-2" readonly></textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="copiarResumo()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1.5 px-3 rounded-lg font-medium text-xs">📋 Copiar</button>
+                        <button onclick="salvarCotacao()" class="flex-1 custom-accent custom-accent-hover text-white py-1.5 px-3 rounded-lg font-medium text-xs">💾 Salvar Cotação</button>
+                    </div>
+                </div>
+                <button onclick="limparCarrinho()" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium flex items-center justify-center text-sm"><span class="mr-1">🗑️</span> Limpar Carrinho</button>
             </div>
         </div>
     </aside>
-    <script>
-    // --- Dados Persistentes ---
-    let fornecedores = JSON.parse(localStorage.getItem('fornecedores')) || ['Fornecedor Exemplo'];
-    let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
-    let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-    let cotacoes = JSON.parse(localStorage.getItem('cotacoes')) || [];
-    let kits = JSON.parse(localStorage.getItem('kits')) || [];
-    let cupons = JSON.parse(localStorage.getItem('cupons')) || [];
-    let kitProdutosTemporario = [];
-    let produtoEditId = null;
-
-    // --- Configurações de Lojas ---
-    const lojasConfig = {
-        shopee: { nome: "Shopee", taxaFixa: 5.00, comissao: 0.20, logo: '🛒' },
-        amazon: { nome: "Amazon", taxaFixa: 2.00, comissao: 0.14, logo: '📦' },
-        ml_premium: { nome: "ML Premium", taxaFixa: 6.00, comissao: 0.165, logo: '🏪' },
-        tiktok: { nome: "TikTok Shop", taxaFixa: 2.00, comissao: 0.06, logo: '🎵' },
-    };
-
-    // --- Inicialização ---
-    document.addEventListener('DOMContentLoaded', () => {
-        atualizarDropdownFornecedores();
-        renderizarCarrinho();
-        showPage('dashboard');
-
-        // --- Event Listeners ---
-        document.getElementById('carrinho-descontos').addEventListener('input', calcularTotais);
-        document.getElementById('carrinho-frete').addEventListener('input', calcularTotais);
-        document.getElementById('filtro-status-cotacao').addEventListener('change', renderizarCotacoes);
-        document.getElementById('produto-form').addEventListener('submit', handleSalvarProduto);
-        document.getElementById('novo-fornecedor').addEventListener('keypress', (e) => { if (e.key === 'Enter') adicionarFornecedor(); });
-        document.getElementById('kit-form').addEventListener('submit', handleSalvarKit);
-        document.getElementById('filtro-produtos-kit').addEventListener('input', filtrarProdutosParaKit);
-        document.getElementById('cupom-form').addEventListener('submit', salvarCupom);
-        document.getElementById('filtro-lojas').addEventListener('input', renderizarProdutosLojas);
-        document.getElementById('produto-imagem').addEventListener('change', previewImagemProduto);
-        // Overlay já tem onclick no HTML
-    });
-
-    // --- Navegação e Exibição ---
-    function showPage(pageId) {
-        document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
-        document.getElementById(pageId + '-page')?.classList.remove('hidden');
-
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('onclick')?.includes(`showPage('${pageId}')`)) item.classList.add('active');
-        });
-
-        const mainContent = document.querySelector('main');
-        if (mainContent) mainContent.scrollTop = 0; // Rola para o topo
-
-        switch (pageId) { /* Carrega dados específicos */
-            case 'dashboard': calcularDashboard(); break;
-            case 'produtos': if (!produtoEditId) limparFormularioProduto(); break; // Só limpa se não estiver editando
-            case 'catalogo': carregarFiltrosCatalogo(); aplicarFiltros(); break;
-            case 'cotacoes': renderizarCotacoes(); break;
-            case 'lojas': renderizarProdutosLojas(); break;
-            case 'kits': inicializarPaginaKits(); break;
-            case 'financeiro': calcularEstatisticasFinanceiras(); break;
-            case 'marketing': inicializarPaginaMarketing(); break;
-        }
-        fecharCarrinho();
-    }
-    function irParaCadastroProduto() { showPage('produtos'); limparFormularioProduto(); }
-
-    // --- Dashboard ---
-    function calcularDashboard() { /* (sem alterações significativas) */
-        const cotacoesSalvas = JSON.parse(localStorage.getItem('cotacoes')) || []; const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || []; const hoje = new Date(); const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        const cotacoesConvertidasMes = cotacoesSalvas.filter(c => c.status === 'Convertida' && new Date(c.dataGeracao) >= inicioDoMes);
-        const vendasMes = cotacoesConvertidasMes.reduce((acc, c) => acc + (parseFloat(c.totalGeral.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0), 0);
-        let lucroMes = 0; cotacoesConvertidasMes.forEach(cotacao => { cotacao.itens.forEach(item => { const custoItem = item.isKit ? item.custo : (item.custo + item.picking); lucroMes += (item.precoVenda - custoItem) * item.quantidade; }); lucroMes += (parseFloat(cotacao.frete.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0); lucroMes -= (parseFloat(cotacao.descontos.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0); });
-        const cotacoesPendentes = cotacoesSalvas.filter(c => c.status === 'Pendente').length; const totalProdutos = produtosSalvos.length;
-        document.getElementById('dash-vendas-mes').textContent = formatarMoeda(vendasMes); document.getElementById('dash-lucro-mes').textContent = formatarMoeda(lucroMes); document.getElementById('dash-cotacoes-pendentes').textContent = cotacoesPendentes; document.getElementById('dash-total-produtos').textContent = totalProdutos; renderizarCotacoesPendentesDashboard();
-    }
-    function renderizarCotacoesPendentesDashboard() { /* (sem alterações significativas) */
-        const cotacoesPendentes = (JSON.parse(localStorage.getItem('cotacoes')) || []).filter(c => c.status === 'Pendente'); const listaContainer = document.getElementById('dash-lista-cotacoes'); listaContainer.innerHTML = '';
-        if (cotacoesPendentes.length === 0) { listaContainer.innerHTML = '<p class="text-gray-400 text-center p-4">🎉 Nenhuma cotação pendente!</p>'; return; }
-        cotacoesPendentes.slice(-5).reverse().forEach(cotacao => { listaContainer.innerHTML += `<div class="bg-gray-800 rounded-lg p-4 flex justify-between items-center"><div><h4 class="text-white font-bold">${cotacao.id}</h4><p class="text-gray-300 text-sm">${cotacao.cliente} - ${cotacao.local}</p><p class="text-gray-400 text-xs">${formatarData(new Date(cotacao.dataGeracao))}</p></div><div class="text-right"><p class="text-white font-bold text-lg">${cotacao.totalGeral}</p><button onclick="alterarStatusCotacao('${cotacao.id}', 'Convertida')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm mt-1">✅ Converter</button></div></div>`; });
-    }
-
-    // --- Fornecedores ---
-    function carregarFornecedoresSelect(selectId) { /* (sem alterações) */
-        const select = document.getElementById(selectId); if (!select) return; const valorAtual = select.value; select.innerHTML = `<option value="">Selecione...</option>`; fornecedores.forEach(f => { const option = document.createElement('option'); option.value = f; option.textContent = f; select.appendChild(option); }); select.value = valorAtual;
-    }
-    function atualizarDropdownFornecedores() { /* (sem alterações) */ ['fornecedores-select', 'produto-fornecedor', 'filtro-fornecedor'].forEach(id => carregarFornecedoresSelect(id)); }
-    function adicionarFornecedor() { /* (sem alterações) */ const input = document.getElementById('novo-fornecedor'); const novo = input.value.trim(); if (!novo) { mostrarNotificacao('Digite o nome!', 'error'); return; } if (fornecedores.includes(novo)) { mostrarNotificacao('Já cadastrado!', 'error'); return; } fornecedores.push(novo); localStorage.setItem('fornecedores', JSON.stringify(fornecedores)); atualizarDropdownFornecedores(); input.value = ''; mostrarNotificacao('Fornecedor adicionado!', 'success'); }
-    function removerFornecedor() { /* (sem alterações) */ const select = document.getElementById('fornecedores-select'); const selecionado = select.value; if (!selecionado) { mostrarNotificacao('Selecione para remover!', 'error'); return; } if (produtos.some(p => p.fornecedor === selecionado)) { mostrarNotificacao('Não pode remover: há produtos associados!', 'error'); return; } fornecedores = fornecedores.filter(f => f !== selecionado); localStorage.setItem('fornecedores', JSON.stringify(fornecedores)); atualizarDropdownFornecedores(); mostrarNotificacao('Fornecedor removido!', 'success'); }
-
-    // --- Produtos ---
-    function handleSalvarProduto(e) { /* (sem alterações significativas) */
-        e.preventDefault(); const fileInput = document.getElementById('produto-imagem'); const file = fileInput.files[0];
-        const produtoData = { sku: document.getElementById('produto-sku').value.trim(), nome: document.getElementById('produto-nome').value.trim(), categoria: document.getElementById('produto-categoria').value.trim(), fornecedor: document.getElementById('produto-fornecedor').value, custo: parseFloat(document.getElementById('produto-custo').value) || 0, picking: parseFloat(document.getElementById('produto-picking').value) || 0, precoVenda: parseFloat(document.getElementById('produto-preco-venda').value) || 0, peso: parseFloat(document.getElementById('produto-peso').value) || 0, comprimento: parseInt(document.getElementById('produto-comprimento').value) || 0, largura: parseInt(document.getElementById('produto-largura').value) || 0, altura: parseInt(document.getElementById('produto-altura').value) || 0, };
-        // Basic validation check (campos required do HTML devem cuidar disso, mas como backup)
-        if (!produtoData.sku || !produtoData.nome || !produtoData.categoria || !produtoData.fornecedor || !produtoData.peso) { mostrarNotificacao('Preencha os campos obrigatórios (*)!', 'error'); return; }
-
-        const salvar = (imageUrl) => { produtoData.imagem = imageUrl; if (produtoEditId) { const index = produtos.findIndex(p => p.id === produtoEditId); if (index !== -1) { if (!imageUrl && produtos[index].imagem) { produtoData.imagem = produtos[index].imagem; } produtos[index] = { ...produtos[index], ...produtoData, dataAtualizacao: new Date().toISOString() }; mostrarNotificacao('Produto atualizado!', 'success'); } } else { produtoData.id = Date.now(); produtoData.dataCadastro = new Date().toISOString(); produtos.push(produtoData); mostrarNotificacao('Produto salvo!', 'success'); } localStorage.setItem('produtos', JSON.stringify(produtos)); limparFormularioProduto(); showPage('catalogo'); };
-        if (file) { const reader = new FileReader(); reader.onload = (e) => salvar(e.target.result); reader.readAsDataURL(file); } else { salvar(produtoEditId ? (produtos.find(p=>p.id===produtoEditId)?.imagem || null) : null); } // Mantem imagem se editando e nao subiu nova
-    }
-    function editarProduto(id) { /* (sem alterações significativas) */
-        const produto = produtos.find(p => p.id === id); if (!produto) return; produtoEditId = id;
-        document.getElementById('produto-id-edit').value = id; document.getElementById('produto-sku').value = produto.sku; document.getElementById('produto-nome').value = produto.nome; document.getElementById('produto-categoria').value = produto.categoria; document.getElementById('produto-fornecedor').value = produto.fornecedor; document.getElementById('produto-custo').value = produto.custo.toFixed(2); document.getElementById('produto-picking').value = produto.picking.toFixed(2); document.getElementById('produto-preco-venda').value = produto.precoVenda.toFixed(2); document.getElementById('produto-peso').value = produto.peso.toFixed(2); document.getElementById('produto-comprimento').value = produto.comprimento; document.getElementById('produto-largura').value = produto.largura; document.getElementById('produto-altura').value = produto.altura;
-        const imgPreview = document.getElementById('produto-imagem-preview'); if (produto.imagem) { imgPreview.src = produto.imagem; imgPreview.classList.remove('hidden'); } else { imgPreview.classList.add('hidden'); } document.getElementById('produto-imagem').value = '';
-        document.getElementById('produto-form-titulo').innerHTML = `<span class="mr-2">✏️</span> Editando Produto`; showPage('produtos');
-    }
-    function limparFormularioProduto() { /* (sem alterações significativas) */
-        produtoEditId = null; document.getElementById('produto-form').reset(); document.getElementById('produto-id-edit').value = '';
-        Object.assign(document.getElementById('produto-custo'), {value: '0.00'}); Object.assign(document.getElementById('produto-picking'), {value: '2.00'}); Object.assign(document.getElementById('produto-preco-venda'), {value: '0.00'}); Object.assign(document.getElementById('produto-peso'), {value: '0.00'}); Object.assign(document.getElementById('produto-comprimento'), {value: '0'}); Object.assign(document.getElementById('produto-largura'), {value: '0'}); Object.assign(document.getElementById('produto-altura'), {value: '0'});
-        const imgPreview = document.getElementById('produto-imagem-preview'); imgPreview.classList.add('hidden'); imgPreview.src = '#'; document.getElementById('produto-form-titulo').innerHTML = `<span class="mr-2">📦</span> Cadastrar Novo Produto`; document.querySelectorAll('#produto-form .border-red-500').forEach(el => el.classList.remove('border-red-500'));
-    }
-    function previewImagemProduto(event) { /* (sem alterações significativas) */ const reader = new FileReader(); const imgPreview = document.getElementById('produto-imagem-preview'); reader.onload = function(){ imgPreview.src = reader.result; imgPreview.classList.remove('hidden'); }; if (event.target.files[0]) { reader.readAsDataURL(event.target.files[0]); } else { imgPreview.classList.add('hidden'); imgPreview.src = '#'; } }
-    function excluirProduto(id) { /* (sem alterações significativas) */ abrirModalConfirmacao(`Excluir este produto? Kits que o usam serão afetados.`, () => confirmarExclusaoProduto(id)); }
-    function confirmarExclusaoProduto(id) { /* (sem alterações significativas) */
-        produtos = produtos.filter(p => p.id !== id); localStorage.setItem('produtos', JSON.stringify(produtos));
-        kits.forEach(kit => { kit.produtos = kit.produtos.filter(p => p.id !== id); }); localStorage.setItem('kits', JSON.stringify(kits)); // Atualiza kits
-        if(document.getElementById('catalogo-page').offsetParent !== null) aplicarFiltros(); if(document.getElementById('lojas-page').offsetParent !== null) renderizarProdutosLojas(); mostrarNotificacao('Produto excluído!', 'success'); fecharModal();
-    }
-
-    // --- Catálogo ---
-    function carregarFiltrosCatalogo() { /* (sem alterações significativas) */
-        carregarFornecedoresSelect('filtro-fornecedor'); const filtroCategoria = document.getElementById('filtro-categoria'); const categorias = [...new Set(produtos.map(p => p.categoria))].sort(); const valorAtual = filtroCategoria.value; filtroCategoria.innerHTML = '<option value="">Todas categorias</option>'; categorias.forEach(c => { const option = document.createElement('option'); option.value = c; option.textContent = c; filtroCategoria.appendChild(option); }); filtroCategoria.value = valorAtual;
-    }
-    function aplicarFiltros() { /* (sem alterações significativas) */
-        const busca = document.getElementById('filtro-busca').value.toLowerCase(); const categoria = document.getElementById('filtro-categoria').value; const fornecedor = document.getElementById('filtro-fornecedor').value; const produtosFiltrados = produtos.filter(p => (!busca || p.nome.toLowerCase().includes(busca) || p.sku.toLowerCase().includes(busca)) && (!categoria || p.categoria === categoria) && (!fornecedor || p.fornecedor === fornecedor) ); renderizarCatalogo(produtosFiltrados);
-    }
-    function limparFiltros() { /* (sem alterações significativas) */ document.getElementById('filtro-busca').value = ''; document.getElementById('filtro-categoria').value = ''; document.getElementById('filtro-fornecedor').value = ''; aplicarFiltros(); }
-    function renderizarCatalogo(produtosParaMostrar) { /* (sem alterações significativas) */
-        const catalogoLista = document.getElementById('catalogo-lista'); catalogoLista.innerHTML = ''; if (produtosParaMostrar.length === 0) { catalogoLista.innerHTML = '<p class="text-gray-400 col-span-full text-center py-10">Nenhum produto encontrado.</p>'; return; }
-        produtosParaMostrar.forEach(produto => { catalogoLista.innerHTML += `<div class="custom-card rounded-lg overflow-hidden flex flex-col"><img src="${produto.imagem || 'https://via.placeholder.com/300'}" alt="${produto.nome}" class="w-full h-48 object-cover" onerror="this.src='https://via.placeholder.com/300';"><div class="p-4 flex flex-col flex-grow"><h4 class="font-bold text-white text-base mb-1 truncate">${produto.nome}</h4><p class="text-gray-400 text-xs mb-0.5">SKU: ${produto.sku}</p><p class="text-gray-400 text-xs mb-0.5">Cat: ${produto.categoria}</p><p class="text-gray-400 text-xs mb-2">For: ${produto.fornecedor}</p><div class="flex justify-between text-sm mb-3 mt-auto pt-2"><span class="text-gray-300 text-xs">Custo: ${formatarMoeda(produto.custo + produto.picking)}</span><span class="text-white font-bold text-base">${formatarMoeda(produto.precoVenda)}</span></div><div class="flex gap-2"><button onclick="adicionarAoCarrinho(${produto.id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-medium">🛒</button><button onclick="editarProduto(${produto.id})" class="flex-1 custom-accent custom-accent-hover text-white px-2 py-1 rounded text-xs font-medium">✏️</button><button onclick="excluirProduto(${produto.id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium">🗑️</button></div></div></div>`; });
-    }
-
-    // --- Carrinho ---
-    function abrirCarrinho() { /* (sem alterações significativas) */ document.getElementById('carrinho-painel').classList.add('show'); document.getElementById('carrinho-overlay').classList.add('show'); }
-    function fecharCarrinho() { /* (sem alterações significativas) */ document.getElementById('carrinho-painel').classList.remove('show'); document.getElementById('carrinho-overlay').classList.remove('show'); document.getElementById('resumo-container').classList.add('hidden'); document.getElementById('resumo-whatsapp').value = ''; window.cotacaoAtual = null; }
-    function renderizarCarrinho() { /* (sem alterações significativas) */
-        const listaItens = document.getElementById('carrinho-itens-lista'); listaItens.innerHTML = ''; if (carrinho.length === 0) { listaItens.innerHTML = '<p class="text-gray-400 text-center p-4 text-sm">Carrinho vazio.</p>'; }
-        carrinho.forEach(item => { const subtotal = item.precoVenda * item.quantidade; listaItens.innerHTML += `<div class="flex items-center gap-3 p-3 custom-card rounded-lg"><img src="${item.imagem || 'https://via.placeholder.com/64'}" alt="${item.nome}" class="w-12 h-12 object-cover rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/64';"><div class="flex-1 min-w-0"><p class="text-white font-semibold truncate text-sm">${item.nome}</p><p class="text-gray-400 text-xs">SKU: ${item.sku}</p><p class="text-gray-300 text-xs">Unit: ${formatarMoeda(item.precoVenda)}</p></div><div class="flex flex-col items-end"><div class="flex items-center gap-1 mb-1"><button onclick="mudarQuantidade(${item.id}, -1, ${item.isKit})" class="bg-gray-700 hover:bg-gray-600 w-6 h-6 rounded font-bold text-sm">-</button><span class="text-white w-6 text-center text-sm">${item.quantidade}</span><button onclick="mudarQuantidade(${item.id}, 1, ${item.isKit})" class="bg-gray-700 hover:bg-gray-600 w-6 h-6 rounded font-bold text-sm">+</button></div><p class="text-white font-bold text-sm">${formatarMoeda(subtotal)}</p><button onclick="removerDoCarrinho(${item.id}, ${item.isKit})" class="text-red-500 hover:text-red-400 text-xs mt-1">Remover</button></div></div>`; });
-        document.getElementById('carrinho-contador').textContent = carrinho.reduce((acc, i) => acc + i.quantidade, 0); calcularTotais();
-    }
-    function mudarQuantidade(id, delta, isKit) { /* (sem alterações significativas) */ const idx = carrinho.findIndex(i => i.id === id && i.isKit === isKit); if (idx === -1) return; carrinho[idx].quantidade += delta; if (carrinho[idx].quantidade <= 0) carrinho.splice(idx, 1); localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderizarCarrinho(); }
-    function removerDoCarrinho(id, isKit) { /* (sem alterações significativas) */ carrinho = carrinho.filter(i => !(i.id === id && i.isKit === isKit)); localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderizarCarrinho(); }
-    function limparCarrinho() { /* (sem alterações significativas) */ carrinho = []; localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderizarCarrinho(); document.getElementById('carrinho-descontos').value = '0'; document.getElementById('carrinho-frete').value = '0'; calcularTotais(); }
-    function calcularTotais() { /* (sem alterações significativas) */ const d = parseFloat(document.getElementById('carrinho-descontos').value) || 0; const f = parseFloat(document.getElementById('carrinho-frete').value) || 0; const s = carrinho.reduce((a, i) => a + (i.precoVenda * i.quantidade), 0); const t = s - d + f; document.getElementById('total-subtotal').textContent = formatarMoeda(s); document.getElementById('total-descontos').textContent = `- ${formatarMoeda(d)}`; document.getElementById('total-frete').textContent = formatarMoeda(f); document.getElementById('total-geral').textContent = formatarMoeda(t); }
-    function adicionarAoCarrinho(id) { /* (sem alterações significativas) */ const p = produtos.find(x => x.id === id); if (!p) return; const i = carrinho.find(item => item.id === id && !item.isKit); if (i) i.quantidade++; else carrinho.push({ ...p, quantidade: 1, isKit: false }); localStorage.setItem('carrinho', JSON.stringify(carrinho)); mostrarNotificacao('Produto adicionado!', 'success'); renderizarCarrinho(); abrirCarrinho(); }
-
-    // --- Cotações ---
-    function gerarResumoWhatsapp() { /* (sem alterações significativas) */ if (carrinho.length === 0) { mostrarNotificacao('Carrinho vazio!', 'error'); return; } const n = document.getElementById('cliente-nome').value.trim() || "Cliente"; const w = formatarTelefone(document.getElementById('cliente-whatsapp').value); const c = document.getElementById('cliente-cidade').value.trim() || "N/I"; const e = document.getElementById('cliente-estado').value.trim().toUpperCase() || "SP"; const l = `${c}/${e}`; const v = parseInt(document.getElementById('cliente-validade').value); const dA = new Date(); const dV = new Date(dA); dV.setDate(dA.getDate() + v); const nextId = (cotacoes.length > 0 ? Math.max(...cotacoes.map(c => c.idNumero)) : 0) + 1; const idF = `ORC-${String(nextId).padStart(4, '0')}`; calcularTotais(); const sT = document.getElementById('total-subtotal').textContent; const dT = document.getElementById('total-descontos').textContent; const fT = document.getElementById('total-frete').textContent; const tT = document.getElementById('total-geral').textContent; let txt = `*ORÇAMENTO #${idF}* - ${formatarData(dA).split(',')[0]}\n_(Válido até ${formatarData(dV).split(',')[0]})_\n\n*Cliente:* ${n}\n*Contato:* ${w}\n*Local:* ${l}\n\n*Itens:*\n`; carrinho.forEach(i => { txt += ` • ${i.nome} (${i.sku}) - ${i.quantidade}x ${formatarMoeda(i.precoVenda)} = ${formatarMoeda(i.precoVenda*i.quantidade)}\n`; }); txt += `\n*Totais:*\n • Produtos: ${sT}\n • Descontos: ${dT.replace('-','')}\n • Frete: ${fT}\n* • TOTAL: ${tT}*\n\n_Obs: Sujeito à disponibilidade._`; document.getElementById('resumo-whatsapp').value = txt; document.getElementById('resumo-container').classList.remove('hidden'); window.cotacaoAtual = { id: idF, idNumero: nextId, dataGeracao: dA.toISOString(), dataValidade: dV.toISOString(), cliente: n, whatsapp: w, local: l, itens: [...carrinho], subtotal: sT, descontos: dT, frete: fT, totalGeral: tT, status: 'Pendente' }; mostrarNotificacao('Resumo gerado!', 'success'); }
-    function copiarResumo() { /* (sem alterações significativas) */ const r = document.getElementById('resumo-whatsapp'); r.select(); if (navigator.clipboard) { navigator.clipboard.writeText(r.value).then(() => mostrarNotificacao('Resumo copiado!', 'success')).catch(() => mostrarNotificacao('Erro.', 'error')); } else { try { document.execCommand('copy'); mostrarNotificacao('Resumo copiado!', 'success'); } catch (err) { mostrarNotificacao('Erro.', 'error'); } } }
-    function salvarCotacao() { /* (sem alterações significativas) */ if (!window.cotacaoAtual) { mostrarNotificacao('Gere resumo!', 'error'); return; } cotacoes.push(window.cotacaoAtual); localStorage.setItem('cotacoes', JSON.stringify(cotacoes)); mostrarNotificacao(`Cotação ${window.cotacaoAtual.id} salva!`, 'success'); limparCarrinho(); document.getElementById('cliente-nome').value = ''; document.getElementById('cliente-whatsapp').value = ''; document.getElementById('cliente-cidade').value = ''; document.getElementById('cliente-estado').value = ''; document.getElementById('resumo-container').classList.add('hidden'); document.getElementById('resumo-whatsapp').value = ''; window.cotacaoAtual = null; fecharCarrinho(); if (!document.getElementById('cotacoes-page').classList.contains('hidden')) renderizarCotacoes(); }
-    function renderizarCotacoes() { /* (sem alterações significativas) */
-        const cS = JSON.parse(localStorage.getItem('cotacoes')) || []; const t = cS.length; const p = cS.filter(c => c.status === 'Pendente').length; const cv = t - p; const tx = (t === 0) ? 0 : (cv / t) * 100;
-        document.getElementById('stat-total').textContent = t; document.getElementById('stat-pendente').textContent = p; document.getElementById('stat-convertida').textContent = cv; document.getElementById('stat-taxa').textContent = `${tx.toFixed(0)}%`;
-        const f = document.getElementById('filtro-status-cotacao').value; const lC = document.getElementById('lista-cotacoes'); lC.innerHTML = ''; const cF = (f === 'Todos') ? cS : cS.filter(c => c.status === f);
-        if (cF.length === 0) { lC.innerHTML = '<p class="text-gray-400 text-center p-6 text-sm">📋 Nenhuma cotação encontrada.</p>'; return; }
-        cF.slice().reverse().forEach(c => { const sC = c.status === 'Pendente' ? 'bg-yellow-500' : 'bg-green-500'; lC.innerHTML += `<div class="custom-card rounded-lg p-4 hover:shadow-md transition-shadow duration-150"><div class="flex justify-between items-start mb-2"><div class="mr-4"><h4 class="text-base font-bold text-white mb-0.5">${c.id}</h4><p class="text-gray-300 text-xs">Cli: ${c.cliente || 'N/I'}</p><p class="text-gray-400 text-xs">Data: ${formatarData(new Date(c.dataGeracao))}</p></div><div class="text-right flex-shrink-0"><span class="${sC} text-white px-2 py-0.5 rounded-full text-xs font-medium">${c.status}</span><p class="text-lg font-bold text-white mt-1">${c.totalGeral}</p></div></div><div class="flex flex-wrap gap-1.5 mt-2"><button onclick="verDetalhesCotacao('${c.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">👁️</button>${c.status === 'Pendente' ? `<button onclick="alterarStatusCotacao('${c.id}', 'Convertida')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">✅</button>` : ''}${c.status === 'Convertida' ? `<button onclick="alterarStatusCotacao('${c.id}', 'Pendente')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs">⏳</button>` : ''}<button onclick="abrirModalConfirmacao('Excluir cotação ${c.id}?', () => confirmarExclusaoCotacao('${c.id}'))" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">🗑️</button></div></div>`; });
-    }
-    function alterarStatusCotacao(id, nS) { /* (sem alterações significativas) */ const idx = cotacoes.findIndex(c => c.id === id); if (idx === -1) return; cotacoes[idx].status = nS; localStorage.setItem('cotacoes', JSON.stringify(cotacoes)); renderizarCotacoes(); if (!document.getElementById('dashboard-page').classList.contains('hidden')) calcularDashboard(); mostrarNotificacao(`Status: ${nS}!`, 'success'); }
-    function confirmarExclusaoCotacao(id) { /* (sem alterações significativas) */ cotacoes = cotacoes.filter(c => c.id !== id); localStorage.setItem('cotacoes', JSON.stringify(cotacoes)); renderizarCotacoes(); if (!document.getElementById('dashboard-page').classList.contains('hidden')) calcularDashboard(); mostrarNotificacao('Cotação excluída!', 'success'); fecharModal(); }
-    function verDetalhesCotacao(id) { /* (sem alterações significativas) */ const c = cotacoes.find(x => x.id === id); if (!c) return; const dG = formatarData(new Date(c.dataGeracao)); const dV = formatarData(new Date(c.dataValidade)).split(',')[0]; let txt = `ORÇAMENTO #${c.id} – ${dG} (Válido até ${dV})\n\n`; txt += `Cliente: ${c.cliente} – WhatsApp: ${c.whatsapp}\nLocal: ${c.local}\n\nItens:\n`; c.itens.forEach(i => { txt += ` • ${i.nome} (${i.sku}) - ${i.quantidade}x ${formatarMoeda(i.precoVenda)} = ${formatarMoeda(i.precoVenda * i.quantidade)}\n`; }); txt += `\nTotais:\n • Produtos: ${c.subtotal}\n • Descontos: ${c.descontos.replace('-','')}\n • Frete: ${c.frete}\n • TOTAL: ${c.totalGeral}\n\nStatus: ${c.status}`; abrirModalDetalhes("Detalhes Cotação " + c.id, txt); }
-
-    // --- Lojas ---
-    function renderizarProdutosLojas() { /* (sem alterações significativas) */
-        const tbody = document.getElementById('lista-produtos-lojas-tbody'); const filtro = document.getElementById('filtro-lojas').value.toLowerCase(); tbody.innerHTML = ''; const placeholder = document.getElementById('lojas-placeholder');
-        const itens = [...produtos.map(p => ({ ...p, isKit: false })), ...kits.map(k => ({ id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`, custo: k.custoTotal, picking: 0, precoVenda: k.precoVenda, imagem: null, isKit: true }))];
-        const itensFiltrados = itens.filter(i => !filtro || i.nome.toLowerCase().includes(filtro) || i.sku.toLowerCase().includes(filtro));
-        placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
-        if (itensFiltrados.length === 0) return;
-
-        itensFiltrados.forEach(item => {
-            const custoTotal = item.custo + item.picking; const lucroDireto = item.precoVenda - custoTotal; const margemDireta = item.precoVenda > 0 ? (lucroDireto / item.precoVenda * 100) : 0;
-            let rowHTML = `<tr data-item-id="${item.id}" data-is-kit="${item.isKit}"><td class="w-1/4"><div class="produto-info"><img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';"><div><p class="font-semibold text-white truncate">${item.nome}</p><p class="text-xs text-gray-400">SKU: ${item.sku}</p></div></div></td><td>${formatarMoeda(custoTotal)}</td>`;
-            Object.entries(lojasConfig).forEach(([key, cfg]) => { rowHTML += `<td><label for="lucro-${key}-${item.id}" class="text-xs text-gray-400 block mb-1">Lucro R$</label><input type="number" step="0.01" value="10.00" id="lucro-${key}-${item.id}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit})" class="form-input p-1 text-sm bg-gray-800"><p class="text-xs mt-1">Mg: <span id="margem-${key}-${item.id}">0%</span></p><p class="text-green-400 font-bold text-sm mt-1" id="preco-${key}-${item.id}">R$ 0,00</p></td>`; });
-            rowHTML += `<td><p class="text-xs text-gray-400">Lucro R$</p><p class="font-semibold">${formatarMoeda(lucroDireto)}</p><p class="text-xs mt-1">Mg: ${margemDireta.toFixed(1)}%</p><p class="text-green-400 font-bold text-sm mt-1">${formatarMoeda(item.precoVenda)}</p></td></tr>`;
-            tbody.innerHTML += rowHTML; recalcularPrecosLoja(item.id, item.isKit);
-        });
-    }
-    function recalcularPrecosLoja(itemId, isKit) { /* (sem alterações significativas) */
-        const item = (isKit ? kits : produtos).find(i => i.id === itemId); if (!item) return;
-        const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
-        Object.entries(lojasConfig).forEach(([key, cfg]) => {
-            const lIn = document.getElementById(`lucro-${key}-${itemId}`); const mSp = document.getElementById(`margem-${key}-${itemId}`); const pSp = document.getElementById(`preco-${key}-${itemId}`); if (!lIn || !mSp || !pSp) return;
-            const lDes = parseFloat(lIn.value) || 0; let pSug = 0; if (1 - cfg.comissao > 0) pSug = (custoTotal + cfg.taxaFixa + lDes) / (1 - cfg.comissao);
-            const lReal = pSug * (1 - cfg.comissao) - cfg.taxaFixa - custoTotal; const mReal = pSug > 0 ? (lReal / pSug * 100) : 0;
-            pSp.textContent = formatarMoeda(pSug); mSp.textContent = `${mReal.toFixed(1)}%`;
-        });
-    }
-
-    // --- Kits ---
-    function inicializarPaginaKits() { /* (sem alterações significativas) */ carregarProdutosParaKitSelect(); renderizarListaKits(); document.getElementById('filtro-kits').addEventListener('input', renderizarListaKits); }
-    function carregarProdutosParaKitSelect(filtro = '') { /* (sem alterações significativas) */ const sel = document.getElementById('kit-produtos-select'); const vAt = sel.value; sel.innerHTML = '<option value="">Selecione...</option>'; const pF = produtos.filter(p => p.nome.toLowerCase().includes(filtro) || p.sku.toLowerCase().includes(filtro)); pF.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = `${p.nome} (${p.sku})`; sel.appendChild(o); }); sel.value = vAt; }
-    function filtrarProdutosParaKit() { /* (sem alterações significativas) */ const f = document.getElementById('filtro-produtos-kit').value.toLowerCase(); carregarProdutosParaKitSelect(f); }
-    function adicionarProdutoAoKit() { /* (sem alterações significativas) */ const sel = document.getElementById('kit-produtos-select'); const pId = parseInt(sel.value); if (!pId) { mostrarNotificacao('Selecione produto!', 'error'); return; } const p = produtos.find(x => x.id === pId); if (!p) { mostrarNotificacao('Produto não encontrado!', 'error'); return; } if (kitProdutosTemporario.find(x => x.id === pId)) { mostrarNotificacao('Já adicionado!', 'error'); return; } kitProdutosTemporario.push(p); renderizarProdutosDoKit(); sel.value = ''; mostrarNotificacao('Produto add ao kit!', 'success'); document.getElementById('filtro-produtos-kit').value = ''; carregarProdutosParaKitSelect(); }
-    function renderizarProdutosDoKit() { /* (sem alterações significativas) */ const cont = document.getElementById('kit-produtos-lista'); cont.innerHTML = ''; let cT = 0; if (kitProdutosTemporario.length === 0) { cont.innerHTML = '<p class="text-gray-400 text-center text-xs">Nenhum produto.</p>'; } else { kitProdutosTemporario.forEach(p => { cT += p.custo + p.picking; cont.innerHTML += `<div class="flex justify-between items-center p-1 bg-gray-700 rounded border border-gray-600 text-xs"><span class="truncate pr-2">${p.nome} (${p.sku})</span><button onclick="removerProdutoDoKit(${p.id})" class="text-red-400 hover:text-red-300 ml-1 p-0.5 text-xs">✕</button></div>`; }); } document.getElementById('kit-custo-total').textContent = formatarMoeda(cT); }
-    function removerProdutoDoKit(pId) { /* (sem alterações significativas) */ kitProdutosTemporario = kitProdutosTemporario.filter(p => p.id !== pId); renderizarProdutosDoKit(); mostrarNotificacao('Produto removido!', 'success'); }
-    function handleSalvarKit(e) { /* (sem alterações significativas) */ e.preventDefault(); const kId = document.getElementById('kit-id').value; const nK = document.getElementById('kit-nome').value.trim(); const pVK = parseFloat(document.getElementById('kit-preco-venda').value); if (!nK || !pVK || pVK <= 0 || kitProdutosTemporario.length === 0) { mostrarNotificacao('Verifique campos/produtos!', 'error'); return; } const cTK = kitProdutosTemporario.reduce((a, p) => a + p.custo + p.picking, 0); const nKi = { id: kId ? parseInt(kId) : Date.now(), nome: nK, produtos: [...kitProdutosTemporario], precoVenda: pVK, custoTotal: cTK }; if (kId) { const i = kits.findIndex(k => k.id === parseInt(kId)); if (i !== -1) kits[i] = nKi; } else { kits.push(nKi); } localStorage.setItem('kits', JSON.stringify(kits)); limparFormularioKit(); renderizarListaKits(); mostrarNotificacao(kId ? 'Kit atualizado!' : 'Kit salvo!', 'success'); if (document.getElementById('lojas-page').offsetParent !== null) renderizarProdutosLojas(); }
-    function limparFormularioKit() { /* (sem alterações significativas) */ document.getElementById('kit-form').reset(); document.getElementById('kit-id').value = ''; document.getElementById('kit-preco-venda').value = '0.00'; document.getElementById('kit-form-titulo').innerHTML = '🧩 Novo Kit'; kitProdutosTemporario = []; renderizarProdutosDoKit(); document.getElementById('filtro-produtos-kit').value = ''; carregarProdutosParaKitSelect(); }
-    function renderizarListaKits() { /* (sem alterações significativas) */
-        const f = document.getElementById('filtro-kits').value.toLowerCase(); const cont = document.getElementById('kits-lista-container'); cont.innerHTML = ''; const kF = kits.filter(k => k.nome.toLowerCase().includes(f)); if (kF.length === 0) { cont.innerHTML = '<p class="text-gray-400 text-center py-10">Nenhum kit encontrado.</p>'; return; }
-        kF.forEach(k => { const lK = k.precoVenda - k.custoTotal; const mK = (k.precoVenda > 0) ? ((lK / k.precoVenda) * 100) : 0; cont.innerHTML += `<div class="custom-card rounded-lg p-3"><div class="flex justify-between items-start mb-1.5"><div class="flex-1 mr-3"><h4 class="text-sm font-bold text-white mb-0.5 truncate">${k.nome}</h4><p class="text-gray-400 text-xs">${k.produtos.length} prod(s)</p></div><div class="text-right flex-shrink-0"><p class="text-base font-bold text-green-400">${formatarMoeda(k.precoVenda)}</p><p class="text-xs text-gray-400">Lucro: ${mK.toFixed(1)}%</p></div></div><div class="mb-2 p-1.5 bg-gray-800 rounded text-xs"><p>Custo: ${formatarMoeda(k.custoTotal)} | Lucro Dir: ${formatarMoeda(lK)}</p></div><div class="flex gap-1.5"><button onclick="mostrarDetalhesKit(${k.id})" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">👁️</button><button onclick="adicionarKitAoCarrinho(${k.id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">🛒</button><button onclick="editarKit(${k.id})" class="flex-1 custom-accent custom-accent-hover text-white px-2 py-1 rounded text-xs">✏️</button><button onclick="excluirKit(${k.id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">🗑️</button></div></div>`; });
-    }
-    function mostrarDetalhesKit(id) { /* (sem alterações significativas) */ const k = kits.find(x => x.id === id); if (!k) return; let dH = `<p class="mb-2 text-sm"><strong>Custo Total:</strong> ${formatarMoeda(k.custoTotal)}</p><p class="mb-3 text-sm"><strong>Preço Direto:</strong> ${formatarMoeda(k.precoVenda)}</p><strong class="block mb-1 text-sm">Produtos:</strong><ul class="list-disc list-inside space-y-1 text-xs max-h-48 overflow-y-auto bg-gray-800 p-2 rounded">`; k.produtos.forEach(p => { dH += `<li>${p.nome} (${p.sku}) - ${formatarMoeda(p.custo+p.picking)}</li>`; }); dH += `</ul>`; abrirModalDetalhes(`Detalhes: ${k.nome}`, dH, true); }
-    function editarKit(id) { /* (sem alterações significativas) */ const k = kits.find(x => x.id === id); if (!k) return; document.getElementById('kit-id').value = k.id; document.getElementById('kit-nome').value = k.nome; document.getElementById('kit-preco-venda').value = k.precoVenda.toFixed(2); document.getElementById('kit-form-titulo').innerHTML = '✏️ Editando Kit'; kitProdutosTemporario = [...k.produtos]; renderizarProdutosDoKit(); }
-    function excluirKit(id) { /* (sem alterações significativas) */ abrirModalConfirmacao(`Excluir este kit?`, () => confirmarExclusaoKit(id)); }
-    function confirmarExclusaoKit(id) { /* (sem alterações significativas) */ kits = kits.filter(k => k.id !== id); localStorage.setItem('kits', JSON.stringify(kits)); renderizarListaKits(); fecharModal(); mostrarNotificacao('Kit excluído!', 'success'); if (document.getElementById('lojas-page').offsetParent !== null) renderizarProdutosLojas(); }
-    function adicionarKitAoCarrinho(id) { /* (sem alterações significativas) */ const k = kits.find(x => x.id === id); if (!k) { mostrarNotificacao('Kit não encontrado!', 'error'); return; } const i = carrinho.find(item => item.id === id && item.isKit); if (i) i.quantidade++; else carrinho.push({ id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`, categoria: 'Kit', fornecedor: 'Kit', custo: k.custoTotal, picking: 0, precoVenda: k.precoVenda, peso: k.produtos.reduce((a, p) => a + p.peso, 0), comprimento: 0, largura: 0, altura: 0, imagem: null, quantidade: 1, isKit: true }); localStorage.setItem('carrinho', JSON.stringify(carrinho)); mostrarNotificacao('Kit adicionado!', 'success'); renderizarCarrinho(); abrirCarrinho(); }
-
-    // --- Marketing/Cupons ---
-    function inicializarPaginaMarketing() { /* (sem alterações significativas) */ renderizarListaCupons(); atualizarEstatisticasCupons(); document.getElementById('filtro-cupons').addEventListener('input', renderizarListaCupons); }
-    function salvarCupom(e) { /* (sem alterações significativas) */
-        e.preventDefault(); const cId = document.getElementById('cupom-id').value; const cod = document.getElementById('cupom-codigo').value.trim().toUpperCase(); const tip = document.getElementById('cupom-tipo').value; const val = parseFloat(document.getElementById('cupom-valor').value); const lim = parseInt(document.getElementById('cupom-usos').value) || 0; const act = document.getElementById('cupom-ativo').checked; if (!cod || !tip || !val || val <= 0) { mostrarNotificacao('Verifique campos!', 'error'); return; } const cEx = cupons.find(c => c.codigo === cod && c.id !== (cId ? parseInt(cId) : null)); if (cEx) { mostrarNotificacao('Código já existe!', 'error'); return; } let uA = 0; if (cId) { const cA = cupons.find(c => c.id === parseInt(cId)); uA = cA ? cA.usosAtuais : 0; } const cup = { id: cId ? parseInt(cId) : Date.now(), codigo: cod, tipo: tip, valor: val, limitUsos: lim, usosAtuais: uA, ativo: act, dataCriacao: cId ? cupons.find(c => c.id === parseInt(cId))?.dataCriacao : new Date().toISOString() }; if (cId) { const i = cupons.findIndex(c => c.id === parseInt(cId)); if (i !== -1) cupons[i] = cup; } else { cupons.push(cup); } localStorage.setItem('cupons', JSON.stringify(cupons)); limparFormularioCupom(); renderizarListaCupons(); atualizarEstatisticasCupons(); mostrarNotificacao(cId ? 'Cupom atualizado!' : 'Cupom criado!', 'success');
-    }
-    function limparFormularioCupom() { /* (sem alterações significativas) */ document.getElementById('cupom-form').reset(); document.getElementById('cupom-id').value = ''; document.getElementById('cupom-ativo').checked = true; document.getElementById('cupom-usos').value = '0'; document.getElementById('cupom-form-titulo').innerHTML = '🎫 Novo Cupom'; }
-    function renderizarListaCupons() { /* (sem alterações significativas) */
-        const f = document.getElementById('filtro-cupons').value.toLowerCase(); const cont = document.getElementById('lista-cupons'); cont.innerHTML = ''; const cF = cupons.filter(c => c.codigo.toLowerCase().includes(f)); if (cF.length === 0) { cont.innerHTML = '<p class="text-gray-400 text-center py-10 text-sm">🎫 Nenhum cupom encontrado.</p>'; return; }
-        cF.forEach(c => { const sC = c.ativo ? 'bg-green-500' : 'bg-gray-500'; const sT = c.ativo ? 'Ativo' : 'Inativo'; const vF = c.tipo === 'fixo' ? formatarMoeda(c.valor) : `${c.valor}%`; const uE = c.limitUsos > 0 && c.usosAtuais >= c.limitUsos; const lT = c.limitUsos === 0 ? `(${c.usosAtuais})` : `(${c.usosAtuais}/${c.limitUsos})`; const uC = uE ? 'text-red-400' : 'text-white'; cont.innerHTML += `<div class="custom-card rounded-lg p-3 flex justify-between items-center text-sm"><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h4 class="font-bold text-white">${c.codigo}</h4><span class="${sC} text-white px-2 py-0.5 rounded-full text-xs">${sT}</span></div><p class="text-gray-300">Desc: <span class="font-semibold">${vF}</span></p><p class="text-gray-300">Usos: <span class="${uC} font-semibold">${lT}</span> ${c.limitUsos === 0 ? 'Ilimit.' : ''}</p></div><div class="flex flex-col sm:flex-row gap-1 ml-2"><button onclick="registrarUsoCupom(${c.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ${uE || !c.ativo ? 'opacity-50 cursor-not-allowed' : ''}" ${uE || !c.ativo ? 'disabled' : ''}>+1</button><button onclick="editarCupom(${c.id})" class="custom-accent custom-accent-hover text-white px-2 py-1 rounded text-xs">✏️</button><button onclick="excluirCupom(${c.id})" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">🗑️</button></div></div>`; });
-    }
-    function registrarUsoCupom(id) { /* (sem alterações significativas) */ const i = cupons.findIndex(c => c.id === id); if (i === -1 || !cupons[i].ativo) return; if (cupons[i].limitUsos > 0 && cupons[i].usosAtuais >= cupons[i].limitUsos) { mostrarNotificacao('Limite atingido!', 'error'); return; } cupons[i].usosAtuais++; localStorage.setItem('cupons', JSON.stringify(cupons)); renderizarListaCupons(); atualizarEstatisticasCupons(); mostrarNotificacao(`Uso registrado para ${cupons[i].codigo}`, 'success'); }
-    function atualizarEstatisticasCupons() { /* (sem alterações significativas) */ const tC = cupons.length; const cF = cupons.filter(c => c.tipo === 'fixo').length; const cP = tC - cF; const tU = cupons.reduce((a, c) => a + c.usosAtuais, 0); document.getElementById('stat-cupom-total').textContent = tC; document.getElementById('stat-cupom-fixo').textContent = cF; document.getElementById('stat-cupom-percentual').textContent = cP; document.getElementById('stat-cupom-usos').textContent = tU; }
-    function editarCupom(id) { /* (sem alterações significativas) */ const c = cupons.find(x => x.id === id); if (!c) return; document.getElementById('cupom-id').value = c.id; document.getElementById('cupom-codigo').value = c.codigo; document.getElementById('cupom-tipo').value = c.tipo; document.getElementById('cupom-valor').value = c.valor; document.getElementById('cupom-usos').value = c.limitUsos; document.getElementById('cupom-ativo').checked = c.ativo; document.getElementById('cupom-form-titulo').innerHTML = '✏️ Editando Cupom'; }
-    function excluirCupom(id) { /* (sem alterações significativas) */ abrirModalConfirmacao(`Excluir este cupom?`, () => confirmarExclusaoCupom(id)); }
-    function confirmarExclusaoCupom(id) { /* (sem alterações significativas) */ cupons = cupons.filter(c => c.id !== id); localStorage.setItem('cupons', JSON.stringify(cupons)); renderizarListaCupons(); atualizarEstatisticasCupons(); fecharModal(); mostrarNotificacao('Cupom excluído!', 'success'); }
-
-    // --- Financeiro ---
-    function calcularEstatisticasFinanceiras() { /* (sem alterações significativas) */ const cC = (JSON.parse(localStorage.getItem('cotacoes')) || []).filter(c => c.status === 'Convertida'); const h = new Date(); const iD = new Date(h.getFullYear(), h.getMonth(), h.getDate()); const iM = new Date(h.getFullYear(), h.getMonth(), 1); const vH = cC.filter(c => new Date(c.dataGeracao) >= iD).reduce((a, c) => a + (parseFloat(c.totalGeral.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0), 0); const vM = cC.filter(c => new Date(c.dataGeracao) >= iM).reduce((a, c) => a + (parseFloat(c.totalGeral.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0), 0); let lT = 0; cC.forEach(ct => { ct.itens.forEach(it => { const cI = it.isKit ? it.custo : (it.custo + it.picking); lT += (it.precoVenda - cI) * it.quantidade; }); lT += (parseFloat(ct.frete.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0); lT -= (parseFloat(ct.descontos.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0); }); document.getElementById('financeiro-vendas-hoje').textContent = formatarMoeda(vH); document.getElementById('financeiro-vendas-mes').textContent = formatarMoeda(vM); document.getElementById('financeiro-lucro-total').textContent = formatarMoeda(lT); }
-
-    // --- Auxiliares ---
-    function formatarMoeda(valor) { return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-    function formatarData(data) { if(!data || !(data instanceof Date)) return '-'; return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-    function formatarTelefone(tel) { if (!tel) return "N/I"; return tel.replace(/\D/g,''); }
-
-    // --- Modais ---
-    function abrirModalConfirmacao(msg, callback) { fecharModal(); const m = document.createElement('div'); m.id = 'modal-confirmacao'; m.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1060] p-4'; m.innerHTML = `<div class="custom-card rounded-lg p-6 max-w-xs w-full mx-auto"><h3 class="text-base font-bold text-white mb-3">Confirmação</h3><p class="text-gray-300 mb-5 text-sm">${msg}</p><div class="flex gap-2"><button id="modal-confirmar-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded font-medium text-xs">Confirmar</button><button onclick="fecharModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded font-medium text-xs">Cancelar</button></div></div>`; document.body.appendChild(m); document.getElementById('modal-confirmar-btn').onclick = callback; window.modalAtual = m; }
-    function abrirModalDetalhes(titulo, conteudo, html = false) { fecharModal(); const m = document.createElement('div'); m.id = 'modal-detalhes'; m.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1060] p-4'; const cCont = document.createElement('div'); cCont.className = "w-full max-h-[60vh] overflow-y-auto p-3 bg-gray-800 border border-gray-600 rounded text-gray-200 text-xs whitespace-pre-wrap"; if (html) cCont.innerHTML = conteudo; else cCont.textContent = conteudo; m.innerHTML = `<div class="custom-card rounded-lg p-5 max-w-md w-full mx-auto flex flex-col"><div class="flex justify-between items-center mb-3"><h3 class="text-base font-bold text-white">${titulo}</h3><button onclick="fecharModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button></div>${cCont.outerHTML}<div class="flex gap-3 mt-3"><button onclick="fecharModal()" class="flex-1 custom-accent custom-accent-hover text-white px-3 py-1.5 rounded font-medium text-xs">Fechar</button></div></div>`; document.body.appendChild(m); window.modalAtual = m; }
-    function fecharModal() { const m = window.modalAtual; if (m) { m.remove(); window.modalAtual = null; } }
-
-    // --- Sistema de Notificações ---
-    function mostrarNotificacao(msg, tipo = 'success') {
-        const el = document.getElementById('notification'); const txt = document.getElementById('notification-text'); if (!el || !txt) return;
-        txt.textContent = msg; el.className = 'notification px-4 py-2 rounded-md shadow-lg text-sm font-medium'; // Base classes
-        if (tipo === 'success') el.classList.add('bg-green-600', 'text-white'); else if (tipo === 'error') el.classList.add('bg-red-600', 'text-white'); else el.classList.add('bg-blue-600', 'text-white'); // Default blue
-        el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000);
-    }
-
-</script>
+    
+    <script src="script.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,55 @@
+body {
+    /* box-sizing: border-box;  <- REMOVIDO (Tailwind já faz) */
+}
+.custom-bg { background-color: #1A1A2E; }
+.custom-accent { background-color: #7F5AF0; }
+.custom-accent-hover:hover { background-color: #6B46C1; }
+.custom-text { color: #F0F0F0; }
+.custom-sidebar { background-color: #16213E; }
+.custom-card { background-color: #0F172A; border: 1px solid #334155; }
+.nav-item { transition: all 0.3s ease; }
+.nav-item:hover { background-color: #7F5AF0; transform: translateX(4px); }
+.nav-item.active { background-color: #7F5AF0; border-right: 4px solid #00F5D4; }
+
+/* Notificação */
+.notification { position: fixed; top: 20px; right: 20px; z-index: 1050; transform: translateX(400px); transition: transform 0.3s ease; }
+.notification.show { transform: translateX(0); }
+
+/* Carrinho e Overlay */
+#carrinho-painel {
+    position: fixed; top: 0; right: 0; width: 90%; /* Mobile */ max-width: 500px; /* Limite máximo */ height: 100%;
+    background-color: #16213E; box-shadow: -10px 0 20px rgba(0,0,0,0.3);
+    z-index: 1040; transform: translateX(100%); transition: transform 0.3s ease-out;
+    display: flex; flex-direction: column;
+}
+@media (min-width: 768px) { #carrinho-painel { width: 40%; } } /* Desktop */
+#carrinho-painel.show { transform: translateX(0); }
+#carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; } /* Scroll interno */
+#carrinho-itens-lista { padding: 1rem; }
+#carrinho-rodape { border-top: 1px solid #334155; padding: 1.5rem; background-color: #16213E; margin-top: auto; flex-shrink: 0; } /* Rodapé fixo no fim do scroll */
+
+#carrinho-overlay {
+    position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1030;
+    opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none;
+}
+#carrinho-overlay.show { opacity: 1; pointer-events: auto; }
+
+/* Lojas - Tabela */
+.table-lojas th, .table-lojas td { padding: 8px 10px; border: 1px solid #334155; text-align: left; vertical-align: top; }
+.table-lojas th { background-color: #1E293B; font-size: 0.8rem; }
+.table-lojas input[type="number"] { width: 65px; padding: 4px; font-size: 0.8rem; text-align: right; }
+.table-lojas .produto-info { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+.table-lojas .produto-info img { width: 32px; height: 32px; object-cover: cover; border-radius: 4px; flex-shrink: 0;}
+.table-lojas .produto-info div { min-width: 0;} /* Evita que nome longo empurre */
+.table-lojas .produto-info p { margin: 0; line-height: 1.3; }
+.sticky-header th { position: sticky; top: 0; background-color: #16213E; z-index: 10; }
+#lista-produtos-lojas-container { max-height: calc(100vh - 250px); overflow-y: auto; } /* Scroll Tabela Lojas */
+
+/* Inputs gerais */
+.form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }
+.form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); } /* Estilo de foco */
+
+/* Ajuste scroll main content */
+/*
+main { height: 100vh; padding-bottom: 5rem;} <- REMOVIDO (Desnecessário)
+*/

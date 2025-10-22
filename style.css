@@ -34,172 +34,121 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* Lojas - NOVO LAYOUT DE CARDS (Substitui .table-lojas) */
+/* Lojas - NOVO LAYOUT DE CARD SIMPLIFICADO (Wireframe) */
 
 /* O Card Principal do Produto */
-.produto-precificacao-card {
+.precificacao-card {
     background-color: #0F172A; /* custom-card bg */
     border: 1px solid #334155;
     border-radius: 0.5rem; /* rounded-lg */
     padding: 1.5rem; /* p-6 */
     display: flex;
     flex-direction: column;
-    gap: 1.5rem; /* space-y-6 */
+    gap: 1.25rem; /* gap-5 */
 }
 
-/* Header do Card (Foto, Nome, Stats) */
-.produto-precificacao-header {
+/* Header (Img, Nome, SKU, Custo) */
+.precificacao-header {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-@media (min-width: 768px) { /* md: */
-    .produto-precificacao-header {
-        flex-direction: row;
-        align-items: center;
-        gap: 1.5rem;
-    }
+    align-items: center;
+    gap: 1rem; /* gap-4 */
 }
 
-.produto-precificacao-img {
-    width: 64px; /* w-16 */
-    height: 64px; /* h-16 */
+.precificacao-img {
+    width: 56px; /* w-14 */
+    height: 56px; /* h-14 */
     object-fit: cover;
     border-radius: 0.5rem; /* rounded-lg */
     border: 1px solid #334155;
     flex-shrink: 0;
 }
 
-.produto-precificacao-stats {
-    display: flex;
-    gap: 1rem;
-    flex-shrink: 0;
-    margin-top: 0.5rem;
-}
-@media (min-width: 768px) { /* md: */
-    .produto-precificacao-stats {
-        gap: 1.5rem;
-        margin-top: 0;
-    }
-}
-.produto-precificacao-stats div {
-    text-align: right;
-}
-
-
-/* Grid com os cards de cada Loja */
-.lojas-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr); /* 1 coluna no mobile */
-    gap: 1rem; /* gap-4 */
-}
-@media (min-width: 640px) { /* sm: */
-    .lojas-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas */
-    }
-}
-@media (min-width: 1024px) { /* lg: */
-    .lojas-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 colunas */
-    }
-}
-@media (min-width: 1536px) { /* 2xl: */
-    .lojas-grid {
-        grid-template-columns: repeat(6, 1fr); /* 6 colunas em telas bem largas */
-    }
-}
-
-/* O Card individual de cada Loja (Shopee, ML, etc.) */
-.loja-preco-card {
-    background-color: #1E293B; /* gray-800/900 - um pouco mais claro que o fundo */
-    border: 1px solid #334155;
-    border-radius: 0.5rem; /* rounded-lg */
-    padding: 1rem; /* p-4 */
-}
-
-.loja-preco-header {
+/* Controles (Input de Lucro) */
+.precificacao-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem; /* gap-2 */
-    padding-bottom: 0.75rem; /* pb-3 */
-    margin-bottom: 0.75rem; /* mb-3 */
-    border-bottom: 1px solid #334155;
+    background-color: #16213E; /* Cor da sidebar, para destacar */
+    padding: 0.75rem 1rem; /* p-3 p-4 */
+    border-radius: 0.5rem;
+}
+.precificacao-controls label {
+    font-size: 0.9rem;
+    font-weight: 600; /* semibold */
+    color: #cbd5e1; /* gray-300 */
+}
+.precificacao-controls input[type="number"] {
+    width: 100px;
+    padding: 0.5rem; /* p-2 */
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: right;
+    background-color: #374151; /* gray-700 */
+    border: 1px solid #4B5563; /* gray-600 */
+    border-radius: 0.375rem; /* rounded-md */
+    color: white;
+}
+.precificacao-controls input[type="number"]:focus {
+    outline: none;
+    border-color: #7F5AF0;
+    box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5);
 }
 
-.loja-logo {
-    width: 24px; /* w-6 */
-    height: 24px; /* h-6 */
-    object-fit: contain;
-}
-
-.loja-preco-body {
+/* Lista de Lojas (Preços) */
+.precificacao-lojas-lista {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem; /* space-y-2 */
+    gap: 0.75rem; /* gap-3 */
+    border-top: 1px solid #334155;
+    padding-top: 1.25rem; /* pt-5 */
 }
 
-/* Estilos dos inputs e infos (reutilizados) */
-.loja-preco-body .input-group {
+.precificacao-loja-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-.loja-preco-body .input-group label {
-    font-size: 0.8rem;
-    color: #94a3b8; /* gray-400 */
-}
-.loja-preco-body input[type="number"] {
-    width: 80px; 
-    padding: 6px; 
-    font-size: 0.8rem; 
-    text-align: right; 
-    background-color: #374151; /* gray-700 */
-    border: 1px solid #4B5563; /* gray-600 */
-    border-radius: 4px;
-    color: white;
-}
-.loja-preco-body input[type="number"]:focus {
-    outline: none; 
-    border-color: #7F5AF0;
+    padding: 0 0.5rem; /* px-2 */
 }
 
-.loja-preco-body .info-line {
+.precificacao-loja-item .loja-info {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem; /* 12px */
-    color: #cbd5e1; /* gray-300 */
+    align-items: center;
+    gap: 0.75rem; /* gap-3 */
+    font-size: 0.9rem;
+    color: #e5e7eb; /* gray-200 */
 }
 
-.loja-preco-body .preco-sugerido {
-    font-size: 1.25rem; /* text-xl */
+.loja-logo {
+    width: 20px; /* w-5 */
+    height: 20px; /* h-5 */
+    object-fit: contain;
+}
+
+.loja-preco-sugerido {
+    font-size: 1rem; /* text-base */
     font-weight: 700; /* font-bold */
+}
+.loja-preco-sugerido.text-green-400 { color: #34d399; }
+.loja-preco-sugerido.text-red-400 { color: #f87171; } /* Um vermelho mais suave */
+
+
+/* Footer (Margem Média) */
+.precificacao-footer {
+    border-top: 1px solid #334155;
+    padding-top: 1.25rem; /* pt-5 */
+    font-size: 0.9rem;
+    color: #9ca3af; /* gray-400 */
     text-align: right;
-    margin-top: 0.25rem; /* mt-1 */
-    color: #34d399; /* Cor padrão (verde) */
 }
-.loja-preco-body .preco-sugerido.text-red-400 { color: #ef4444; }
-.loja-preco-body .text-green-400 { color: #34d399; }
-.loja-preco-body .text-red-400 { color: #ef4444; }
 
 
-/* Garante que o container de scroll não exista mais */
-#lista-produtos-lojas-container { 
-    max-height: none; 
+/* Garante que o container de scroll não exista mais e limpa estilos antigos */
+#lista-produtos-lojas-container {
+    max-height: none;
     overflow-y: visible;
+    /* Remove estilos de .table-lojas, .loja-cell, .lojas-grid, .produto-precificacao-card, etc., pois foram substituídos */
 }
-
-/* --- CÓDIGO ANTIGO DA TABELA REMOVIDO DAQUI ---
-   .loja-cell { ... }
-   .table-lojas { ... }
-   .sticky-header { ... }
-   --- CÓDIGO ANTIGO DA TABELA REMOVIDO DAQUI ---
-*/
 
 /* Inputs gerais (ESSES FICAM) */
 .form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }
 .form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); } /* Estilo de foco */
-
-/* Ajuste scroll main content */
-/*
-main { height: 100vh; padding-bottom: 5rem;} <- REMOVIDO (Desnecessário)
-*/

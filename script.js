@@ -534,38 +534,19 @@ function verDetalhesCotacao(id) {
 // --- Lojas ---
 
 /**
- * ATUALIZADO (NOVAMENTE): Renderiza a tabela de lojas dinamicamente.
- * MELHORIA: Para Facebook e WhatsApp, o input "Lucro R$" agora é preenchido
- * automaticamente com o lucro real (calculado a partir do 'Preço Venda Direta'
- * cadastrado no produto), em vez do padrão de R$10.
+ * REFEITO: Renderiza a precificação em formato de CARD por produto.
+ * Abandona o layout de tabela para uma lista de cards mais visual.
  */
 function renderizarProdutosLojas() {
-    const thead = document.getElementById('lista-produtos-lojas-thead');
-    const tbody = document.getElementById('lista-produtos-lojas-tbody');
+    // 1. Pegar os elementos
+    const container = document.getElementById('lista-produtos-lojas-container');
     const filtro = document.getElementById('filtro-lojas').value.toLowerCase();
     const placeholder = document.getElementById('lojas-placeholder');
 
-    // --- 1. Gerar Cabeçalho Dinâmico ---
-    thead.innerHTML = ''; // Limpa o cabeçalho
-    let headerHTML = '<tr>';
-    headerHTML += '<th class="w-1/4">Produto / Kit</th>'; // Coluna do produto (com Preço Direto)
-    headerHTML += '<th class="w-[120px]">Custo Total</th>';
-    
-    // Adiciona uma coluna de header para cada loja na config (com logo)
-    Object.values(lojasConfig).forEach(loja => {
-        headerHTML += `<th>
-            <div class="flex items-center gap-2 justify-center">
-                ${loja.logo ? `<img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="h-6 w-6 object-contain" onerror="this.onerror=null; this.src='httpsa://via.placeholder.com/24/0F172A/94a3b8?text=${loja.nome[0]}';">` : ''}
-                ${loja.nome}
-            </div>
-        </th>`;
-    });
-    headerHTML += '</tr>';
-    thead.innerHTML = headerHTML;
+    // 2. Limpar o container
+    container.innerHTML = ''; 
 
-    // --- 2. Gerar Corpo da Tabela ---
-    tbody.innerHTML = ''; // Limpa o corpo
-    
+    // 3. Pegar e filtrar os itens (mesma lógica de antes)
     const itens = [
         ...produtos.map(p => ({ ...p, isKit: false })),
         ...kits.map(k => ({ id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`, custo: k.custoTotal, picking: 0, precoVenda: k.precoVenda, imagem: null, isKit: true }))
@@ -573,47 +554,64 @@ function renderizarProdutosLojas() {
 
     const itensFiltrados = itens.filter(i => !filtro || i.nome.toLowerCase().includes(filtro) || i.sku.toLowerCase().includes(filtro));
     
+    // 4. Mostrar/Esconder o placeholder
     placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
     if (itensFiltrados.length === 0) return;
 
+    // 5. Construir os CARDS (a nova lógica)
     itensFiltrados.forEach(item => {
         const custoTotal = item.isKit ? item.custoTotal : (item.custo + item.picking);
-        
-        let rowHTML = `<tr data-item-id="${item.id}" data-is-kit="${item.isKit}">`;
-        
-        // Coluna 1: Produto Info (com Preço Direta)
-        rowHTML += `<td class="w-1/4">
-            <div class="produto-info">
-                <img src="${item.imagem || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40';">
-                <div>
-                    <p class="font-semibold text-white truncate">${item.nome}</p>
-                    <p class="text-xs text-gray-400">SKU: ${item.sku}</p>
-                    <p class="text-xs text-blue-400 font-bold mt-1">Venda Direta (Base): ${formatarMoeda(item.precoVenda)}</p>
+        const precoVendaBase = item.precoVenda;
+        const lucroVendaBase = precoVendaBase - custoTotal;
+
+        // Card principal
+        let cardHTML = `<div class="produto-precificacao-card">`;
+
+        // --- Card Header: Informações do Produto ---
+        cardHTML += `
+            <div class="produto-precificacao-header">
+                <img src="${item.imagem || 'https://via.placeholder.com/64'}" alt="${item.nome}" class="produto-precificacao-img" onerror="this.src='https://via.placeholder.com/64';">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-bold text-white truncate">${item.nome}</h3>
+                    <p class="text-sm text-gray-400">SKU: ${item.sku}</p>
+                </div>
+                <div class="produto-precificacao-stats">
+                    <div>
+                        <span class="text-xs text-gray-400">Custo Total</span>
+                        <p class="text-base font-bold text-red-400">${formatarMoeda(custoTotal)}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400">Venda Direta</span>
+                        <p class="text-base font-bold text-blue-400">${formatarMoeda(precoVendaBase)}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400">Lucro Direto</span>
+                        <p class="text-base font-bold ${lucroVendaBase < 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(lucroVendaBase)}</p>
+                    </div>
                 </div>
             </div>
-        </td>`;
-        
-        // Coluna 2: Custo Total
-        rowHTML += `<td class="text-center">${formatarMoeda(custoTotal)}</td>`;
+        `;
 
-        // Colunas 3+: Lojas (Dinâmico)
+        // --- Card Body: Grid de Lojas ---
+        cardHTML += `<div class="lojas-grid">`;
+
         Object.keys(lojasConfig).forEach(key => {
+            const loja = lojasConfig[key];
             const idBase = `${key}-${item.id}-${item.isKit}`;
             
-            // --- AQUI ESTÁ A MELHORIA ---
+            // Lógica para preencher o lucro (R$10 ou o lucro da Venda Direta)
             let valorInputLucro = "10.00"; // Padrão de R$10
-            
-            // Se a loja for Wpp ou Face (sem comissão)
-            if (lojasConfig[key].comissao === 0) {
-                // O lucro padrão será o Preço de Venda (base) - Custo Total
-                const lucroVendaDireta = item.precoVenda - custoTotal;
-                valorInputLucro = lucroVendaDireta.toFixed(2);
+            if (loja.comissao === 0) { // Se for Venda Direta (Face/Wpp)
+                valorInputLucro = lucroVendaBase.toFixed(2);
             }
-            // --- FIM DA MELHORIA ---
-            
-            rowHTML += `
-                <td>
-                    <div class="loja-cell">
+
+            cardHTML += `
+                <div class="loja-preco-card">
+                    <div class="loja-preco-header">
+                        <img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="loja-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/24/0F172A/94a3b8?text=${loja.nome[0]}';">
+                        <span class="text-white font-semibold">${loja.nome}</span>
+                    </div>
+                    <div class="loja-preco-body">
                         <div class="input-group">
                             <label for="lucro-${idBase}">Lucro R$</label>
                             <input type="number" step="0.01" value="${valorInputLucro}" id="lucro-${idBase}" oninput="recalcularPrecosLoja(${item.id}, ${item.isKit}, '${key}')">
@@ -626,19 +624,22 @@ function renderizarProdutosLojas() {
                             R$ 0,00
                         </div>
                     </div>
-                </td>`;
+                </div>
+            `;
         });
 
-        rowHTML += `</tr>`;
-        tbody.innerHTML += rowHTML;
+        cardHTML += `</div>`; // Fim .lojas-grid
+        cardHTML += `</div>`; // Fim .produto-precificacao-card
+
+        // Adiciona o card completo ao container
+        container.innerHTML += cardHTML;
         
-        // Dispara o cálculo inicial para esta linha
+        // Dispara o cálculo inicial para este card
         Object.keys(lojasConfig).forEach(key => {
             recalcularPrecosLoja(item.id, item.isKit, key);
         });
     });
 }
-
 /**
  * ATUALIZADO: Recalcula o preço de UMA loja específica quando o input "Lucro" é alterado.
  */

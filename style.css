@@ -34,76 +34,168 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* Lojas - Tabela (REFEITO) */
-.table-lojas th, .table-lojas td { 
-    padding: 10px 12px; /* Mais espaçamento */
-    border: 1px solid #334155; 
-    text-align: left; 
-    vertical-align: top; 
-    white-space: nowrap; /* Evita quebra de linha no header */
-}
-.table-lojas th { 
-    background-color: #1E293B; 
-    font-size: 0.8rem; 
-    text-transform: uppercase; /* Deixa o header mais limpo */
-}
+/* Lojas - NOVO LAYOUT DE CARDS (Substitui .table-lojas) */
 
-/* Célula de Loja (NOVO - para organizar Lucro/Margem/Preço) */
-.loja-cell {
+/* O Card Principal do Produto */
+.produto-precificacao-card {
+    background-color: #0F172A; /* custom-card bg */
+    border: 1px solid #334155;
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 1.5rem; /* p-6 */
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Espaço entre os elementos */
+    gap: 1.5rem; /* space-y-6 */
 }
-.loja-cell .lucro-input-group {
+
+/* Header do Card (Foto, Nome, Stats) */
+.produto-precificacao-header {
     display: flex;
-    align-items: center;
-    gap: 4px;
+    flex-direction: column;
+    gap: 1rem;
 }
-.loja-cell .lucro-input-group label {
-    font-size: 0.75rem; /* 12px */
-    color: #94a3b8; /* gray-400 */
+@media (min-width: 768px) { /* md: */
+    .produto-precificacao-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 1.5rem;
+    }
+}
+
+.produto-precificacao-img {
+    width: 64px; /* w-16 */
+    height: 64px; /* h-16 */
+    object-fit: cover;
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #334155;
     flex-shrink: 0;
 }
-.table-lojas input[type="number"] { 
-    width: 75px; /* Um pouco maior */
+
+.produto-precificacao-stats {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+}
+@media (min-width: 768px) { /* md: */
+    .produto-precificacao-stats {
+        gap: 1.5rem;
+        margin-top: 0;
+    }
+}
+.produto-precificacao-stats div {
+    text-align: right;
+}
+
+
+/* Grid com os cards de cada Loja */
+.lojas-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* 1 coluna no mobile */
+    gap: 1rem; /* gap-4 */
+}
+@media (min-width: 640px) { /* sm: */
+    .lojas-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+    }
+}
+@media (min-width: 1024px) { /* lg: */
+    .lojas-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+    }
+}
+@media (min-width: 1536px) { /* 2xl: */
+    .lojas-grid {
+        grid-template-columns: repeat(6, 1fr); /* 6 colunas em telas bem largas */
+    }
+}
+
+/* O Card individual de cada Loja (Shopee, ML, etc.) */
+.loja-preco-card {
+    background-color: #1E293B; /* gray-800/900 - um pouco mais claro que o fundo */
+    border: 1px solid #334155;
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 1rem; /* p-4 */
+}
+
+.loja-preco-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* gap-2 */
+    padding-bottom: 0.75rem; /* pb-3 */
+    margin-bottom: 0.75rem; /* mb-3 */
+    border-bottom: 1px solid #334155;
+}
+
+.loja-logo {
+    width: 24px; /* w-6 */
+    height: 24px; /* h-6 */
+    object-fit: contain;
+}
+
+.loja-preco-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* space-y-2 */
+}
+
+/* Estilos dos inputs e infos (reutilizados) */
+.loja-preco-body .input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.loja-preco-body .input-group label {
+    font-size: 0.8rem;
+    color: #94a3b8; /* gray-400 */
+}
+.loja-preco-body input[type="number"] {
+    width: 80px; 
     padding: 6px; 
     font-size: 0.8rem; 
     text-align: right; 
     background-color: #374151; /* gray-700 */
     border: 1px solid #4B5563; /* gray-600 */
     border-radius: 4px;
+    color: white;
 }
-.table-lojas input[type="number"]:focus {
+.loja-preco-body input[type="number"]:focus {
     outline: none; 
     border-color: #7F5AF0;
 }
 
-.loja-cell .stats {
+.loja-preco-body .info-line {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.75rem; /* 12px */
     color: #cbd5e1; /* gray-300 */
 }
-.loja-cell .preco-sugerido {
-    font-size: 0.95rem; /* 15px */
-    font-weight: 700;
-    color: #34d399; /* Corrigido para um verde (era green-400) */
-    margin-top: 2px;
+
+.loja-preco-body .preco-sugerido {
+    font-size: 1.25rem; /* text-xl */
+    font-weight: 700; /* font-bold */
+    text-align: right;
+    margin-top: 0.25rem; /* mt-1 */
+    color: #34d399; /* Cor padrão (verde) */
 }
+.loja-preco-body .preco-sugerido.text-red-400 { color: #ef4444; }
+.loja-preco-body .text-green-400 { color: #34d399; }
+.loja-preco-body .text-red-400 { color: #ef4444; }
 
-/* Informações do Produto (Original) */
-.table-lojas .produto-info { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-.table-lojas .produto-info img { width: 32px; height: 32px; object-cover: cover; border-radius: 4px; flex-shrink: 0;}
-.table-lojas .produto-info div { min-width: 0;} /* Evita que nome longo empurre */
-.table-lojas .produto-info p { margin: 0; line-height: 1.3; }
 
-/* Header Fixo e Scroll (Original) */
-.sticky-header th { position: sticky; top: 0; background-color: #16213E; z-index: 10; }
+/* Garante que o container de scroll não exista mais */
 #lista-produtos-lojas-container { 
-    max-height: calc(100vh - 250px); 
-    overflow-y: auto; 
-    /* overflow-x: auto; foi movido para o HTML */
+    max-height: none; 
+    overflow-y: visible;
 }
 
-/* Inputs gerais */
+/* --- CÓDIGO ANTIGO DA TABELA REMOVIDO DAQUI ---
+   .loja-cell { ... }
+   .table-lojas { ... }
+   .sticky-header { ... }
+   --- CÓDIGO ANTIGO DA TABELA REMOVIDO DAQUI ---
+*/
+
+/* Inputs gerais (ESSES FICAM) */
 .form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }
 .form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); } /* Estilo de foco */
 

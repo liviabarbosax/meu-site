@@ -34,168 +34,210 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* Lojas - NOVO LAYOUT DE CARD DETALHADO */
+/* --- INÍCIO: NOVOS ESTILOS ABA LOJAS (SUBSTITUIR) --- */
 
-/* O Card Principal do Produto */
+/* Variáveis de Cor/Borda para consistência */
+:root {
+    --border-color-light: #334155; /* gray-700 */
+    --border-color-dark: #1e293b;  /* gray-800 */
+    --bg-card: #0F172A;
+    --bg-card-header: #16213E;
+    --bg-input: #374151;
+    --text-label: #9ca3af; /* gray-400 */
+    --text-value: #e5e7eb; /* gray-200 */
+    --text-profit: #34d399; /* green-400 */
+    --text-loss: #f87171; /* red-400 */
+    --card-padding: 1.25rem; /* p-5 */
+}
+
+/* O Card Principal do Produto (O mesmo de antes) */
 .precificacao-card {
-    background-color: #0F172A; /* custom-card bg */
-    border: 1px solid #334155;
-    border-radius: 0.5rem; /* rounded-lg */
-    padding: 1.5rem; /* p-6 */
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color-light);
+    border-radius: 0.5rem;
+    padding: var(--card-padding);
     display: flex;
     flex-direction: column;
-    gap: 1.25rem; /* gap-5 */
+    gap: 1.25rem;
 }
 
-/* Header (Img, Nome, SKU, Custo E STATS) */
-.precificacao-header {
+/* Header do Produto (O mesmo de antes) */
+.precificacao-header { display: flex; flex-direction: column; gap: 1rem; }
+@media (min-width: 768px) { .precificacao-header { flex-direction: row; align-items: center; } }
+.precificacao-img { width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--border-color-light); flex-shrink: 0; }
+.precificacao-header-stats { display: flex; gap: 1.5rem; flex-shrink: 0; margin-top: 0.5rem; border-top: 1px solid var(--border-color-light); padding-top: 0.75rem; }
+@media (min-width: 768px) { .precificacao-header-stats { margin-top: 0; margin-left: auto; border-top: none; padding-top: 0; } }
+.precificacao-header-stats div { text-align: right; }
+
+/* Controles Globais (O mesmo de antes) */
+.precificacao-controls { display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-card-header); padding: 0.75rem 1rem; border-radius: 0.5rem; }
+.precificacao-controls label { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; }
+.precificacao-controls input[type="number"] { width: 100px; padding: 0.5rem; font-size: 0.9rem; font-weight: 700; text-align: right; background-color: var(--bg-input); border: 1px solid var(--border-color-light); border-radius: 0.375rem; color: white; }
+.precificacao-controls input[type="number"]:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); }
+
+/* Container da Lista de Lojas (Alterado) */
+.precificacao-lojas-lista {
     display: flex;
-    flex-direction: column; /* Mobile first */
-    gap: 1rem; /* gap-4 */
+    flex-direction: column;
+    gap: 0.75rem; /* Espaço entre os cards das lojas */
+    border-top: 1px solid var(--border-color-light);
+    padding-top: 1.25rem;
 }
-@media (min-width: 768px) { /* md: */
-    .precificacao-header {
-        flex-direction: row; /* Lado a lado em telas maiores */
+
+/* NOVO: O Card "Sanfona" de Cada Loja */
+.loja-card {
+    background-color: var(--bg-card-header);
+    border: 1px solid var(--border-color-light);
+    border-radius: 0.5rem;
+    overflow: hidden; /* Importante para o 'max-height' */
+    transition: all 0.3s ease-in-out;
+}
+.loja-card:hover {
+    border-color: #7F5AF0; /* Destaque no hover */
+}
+
+/* NOVO: A parte "Simples" (cabeçalho clicável) */
+.loja-card-simples {
+    display: flex;
+    flex-direction: column; /* Mobile */
+    justify-content: space-between;
+    padding: 0.75rem var(--card-padding);
+    cursor: pointer;
+}
+@media (min-width: 640px) { /* sm: */
+    .loja-card-simples {
+        flex-direction: row; /* Desktop */
         align-items: center;
     }
 }
 
-.precificacao-img {
-    width: 56px; /* w-14 */
-    height: 56px; /* h-14 */
-    object-fit: cover;
-    border-radius: 0.5rem; /* rounded-lg */
-    border: 1px solid #334155;
-    flex-shrink: 0;
-}
-
-/* Stats no Header (Venda Direta, Lucro Direto) */
-.precificacao-header-stats {
-    display: flex;
-    gap: 1.5rem; /* gap-6 */
-    flex-shrink: 0;
-    margin-top: 0.5rem; /* Espaço acima no mobile */
-    border-top: 1px solid #334155; /* Linha divisória no mobile */
-    padding-top: 0.75rem; /* pt-3 */
-}
-@media (min-width: 768px) { /* md: */
-    .precificacao-header-stats {
-        margin-top: 0;
-        margin-left: auto; /* Empurra para a direita */
-        border-top: none;
-        padding-top: 0;
-    }
-}
-.precificacao-header-stats div {
-    text-align: right;
-}
-
-
-/* Controles (Input de Lucro) */
-.precificacao-controls {
+.loja-card-simples .loja-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* gap-2 */
-    background-color: #16213E;
-    padding: 0.75rem 1rem; /* p-3 p-4 */
-    border-radius: 0.5rem;
-}
-.precificacao-controls label {
-    font-size: 0.9rem;
-    font-weight: 600; /* semibold */
-    color: #cbd5e1; /* gray-300 */
-}
-.precificacao-controls input[type="number"] {
-    width: 100px;
-    padding: 0.5rem; /* p-2 */
-    font-size: 0.9rem;
+    gap: 0.75rem;
+    font-size: 1.125rem; /* text-lg */
     font-weight: 700;
-    text-align: right;
-    background-color: #374151; /* gray-700 */
-    border: 1px solid #4B5563; /* gray-600 */
-    border-radius: 0.375rem; /* rounded-md */
     color: white;
 }
-.precificacao-controls input[type="number"]:focus {
+.loja-logo { width: 24px; height: 24px; object-fit: contain; }
+
+.loja-card-simples .loja-resultado-simples {
+    text-align: right;
+    margin-top: 0.5rem; /* Mobile */
+}
+@media (min-width: 640px) { /* sm: */
+    .loja-card-simples .loja-resultado-simples {
+        margin-top: 0;
+    }
+}
+
+.loja-preco-final {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+}
+.loja-lucro-final { font-size: 0.875rem; /* text-sm */ }
+.loja-margem-final { font-size: 0.875rem; /* text-sm */ color: var(--text-label); }
+.loja-toggle-btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7F5AF0; /* Cor de Ação */
+    margin-top: 4px;
+    user-select: none; /* Impede seleção de texto */
+}
+
+/* Cores de Lucro/Prejuízo */
+.profit-positive { color: var(--text-profit); }
+.profit-negative { color: var(--text-loss); }
+
+/* NOVO: A parte "Detalhada" (o extrato) */
+.loja-card-detalhes {
+    max-height: 0; /* Começa fechado */
+    padding: 0 var(--card-padding); /* Padding lateral */
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
+    border-top: 1px solid var(--border-color-light);
+}
+.loja-card-detalhes.expanded {
+    max-height: 500px; /* Altura máxima para expansão */
+    opacity: 1;
+    padding: var(--card-padding); /* Padding total */
+}
+
+.extrato-titulo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color-dark);
+    padding-bottom: 0.5rem;
+}
+
+.extrato-secao {
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    color: #7F5AF0; /* Cor de destaque */
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.extrato-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem; /* text-sm */
+    padding: 0.35rem 0;
+}
+.extrato-label {
+    color: var(--text-label);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.extrato-label .calc-info {
+    font-size: 0.7rem;
+    color: #555;
+}
+.extrato-value {
+    color: var(--text-value);
+    font-weight: 600;
+}
+
+/* Inputs customizados para o extrato */
+.extrato-input {
+    width: 90px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: right;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color-light);
+    border-radius: 0.375rem;
+    color: white;
+    padding: 0.25rem 0.5rem;
+}
+.extrato-input:focus {
     outline: none;
     border-color: #7F5AF0;
     box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5);
 }
 
-/* Lista de Lojas (Preços E DETALHES) */
-.precificacao-lojas-lista {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem; /* Reduzido para ficar mais compacto */
-    border-top: 1px solid #334155;
-    padding-top: 1.25rem; /* pt-5 */
+.extrato-linha-final {
+    border-top: 1px solid var(--border-color-light);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
 }
 
-.precificacao-loja-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.25rem 0.5rem; /* Reduzido padding vertical */
-}
-
-.precificacao-loja-item .loja-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem; /* gap-3 */
-    font-size: 0.9rem;
-    color: #e5e7eb; /* gray-200 */
-    flex-shrink: 0; /* Evita que o nome da loja encolha */
-    min-width: 150px; /* Garante espaço para o nome da loja */
-}
-
-.loja-logo {
-    width: 20px; /* w-5 */
-    height: 20px; /* h-5 */
-    object-fit: contain;
-}
-
-/* Container para Preço e Detalhes (Lucro/Margem) */
-.loja-resultados {
-    display: flex;
-    flex-direction: column; /* Empilha Preço e Detalhes */
-    align-items: flex-end; /* Alinha à direita */
-    gap: 0.1rem; /* Espaço mínimo entre preço e detalhes */
-    text-align: right;
-    flex-grow: 1; /* Ocupa espaço restante */
-    margin-left: 1rem; /* Espaço entre nome da loja e resultados */
-}
-
-.loja-preco-sugerido {
-    font-size: 1rem; /* text-base */
-    font-weight: 700; /* font-bold */
-}
-.loja-preco-sugerido.text-green-400 { color: #34d399; }
-.loja-preco-sugerido.text-red-400 { color: #f87171; }
-
-/* SUBSTITUA O ANTIGO .loja-detalhes POR ISTO: */
-.loja-detalhe-linha {
-    font-size: 0.75rem; /* text-xs */
-    color: #9ca3af; /* gray-400 */
-    white-space: nowrap;
-}
-.loja-detalhe-linha span {
-    font-weight: 600; /* semibold */
-    color: #e5e7eb; /* gray-200 */
-}
-.loja-detalhe-linha span.text-green-400 { color: #34d399; }
-.loja-detalhe-linha span.text-red-400 { color: #f87171; }
-
-
-/* Footer (Margem Média) */
+/* O Footer do Card de Produto (O mesmo de antes) */
 .precificacao-footer {
-    border-top: 1px solid #334155;
-    padding-top: 1rem; /* Reduzido */
-    margin-top: 0.5rem; /* Adicionado espaço acima */
+    border-top: 1px solid var(--border-color-light);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
     font-size: 0.9rem;
-    color: #9ca3af; /* gray-400 */
+    color: var(--text-label);
     text-align: right;
 }
 
+/* --- FIM: NOVOS ESTILOS ABA LOJAS --- */
 
 /* Garante que o container de scroll não exista mais */
 #lista-produtos-lojas-container {

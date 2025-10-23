@@ -521,6 +521,125 @@ function verDetalhesCotacao(id) {
 
 // --- Lojas ---
 
+// NOVA FUNÇÃO: Controla o "Acordeon"
+function toggleDetalhesLoja(idLoja) {
+    const details = document.getElementById(`details-${idLoja}`);
+    const toggleBtn = document.getElementById(`toggle-${idLoja}`);
+    
+    if (details && toggleBtn) {
+        const isExpanded = details.classList.toggle('expanded');
+        toggleBtn.textContent = isExpanded ? '[Ocultar Detalhes 🔼]' : '[Ver Detalhes 🔽]';
+    }
+}
+
+// NOVA FUNÇÃO: O "Cérebro" da Calculadora para cada loja
+// Trigger pode ser 'lucro_global', 'frete', ou 'ajuste'
+function atualizarCalculoLoja(lojaKey, itemId, isKit, trigger) {
+    const item = (isKit ? kits : produtos).find(i => i.id === itemId);
+    if (!item) return;
+    
+    const cfg = lojasConfig[lojaKey];
+    const idBaseCard = `${itemId}-${isKit}`;
+    const idLoja = `${lojaKey}-${idBaseCard}`;
+
+    // 1. Encontrar todos os elementos da UI
+    const lucroGlobalInput = document.getElementById(`lucro-global-${idBaseCard}`);
+    const freteInput = document.getElementById(`frete-${idLoja}`);
+    const ajusteInput = document.getElementById(`ajuste-${idLoja}`);
+
+    const custoSpan = document.getElementById(`custo-${idLoja}`);
+    const lucroDesejadoSpan = document.getElementById(`lucro-desejado-${idLoja}`);
+    const subtotalSpan = document.getElementById(`subtotal-${idLoja}`);
+    const taxaFixaSpan = document.getElementById(`taxa-fixa-${idLoja}`);
+    const comissaoSpan = document.getElementById(`comissao-${idLoja}`);
+    const calcInfoSpan = document.getElementById(`calc-info-${idLoja}`);
+    const precoIdealSpan = document.getElementById(`preco-ideal-${idLoja}`);
+    const lucroRealSpan = document.getElementById(`lucro-real-${idLoja}`);
+    const margemRealSpan = document.getElementById(`margem-real-${idLoja}`);
+    
+    // Elementos da visão simples
+    const simplePriceSpan = document.getElementById(`simple-price-${idLoja}`);
+    const simpleLucroSpan = document.getElementById(`simple-lucro-${idLoja}`);
+    const simpleMargemSpan = document.getElementById(`simple-margem-${idLoja}`);
+    
+    // 2. Obter valores de Custo e Inputs
+    const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
+    const lucroDesejado = parseFloat(lucroGlobalInput.value) || 0;
+    const freteGratis = parseFloat(freteInput.value) || 0;
+
+    // 3. Calcular a Base (A) e Preço Ideal (B, C)
+    const subtotalBase = custoTotal + freteGratis + lucroDesejado;
+    const precoIdeal = (cfg.comissao < 1) ? (subtotalBase + cfg.taxaFixa) / (1 - cfg.comissao) : (subtotalBase + cfg.taxaFixa);
+    const comissaoValorIdeal = precoIdeal * cfg.comissao;
+    
+    // 4. Atualizar o Extrato (Seções A, B, C)
+    if (custoSpan) custoSpan.textContent = formatarMoeda(custoTotal);
+    if (lucroDesejadoSpan) lucroDesejadoSpan.textContent = formatarMoeda(lucroDesejado);
+    if (subtotalSpan) subtotalSpan.textContent = formatarMoeda(subtotalBase);
+    if (taxaFixaSpan) taxaFixaSpan.textContent = formatarMoeda(cfg.taxaFixa);
+    if (comissaoSpan) comissaoSpan.textContent = formatarMoeda(comissaoValorIdeal);
+    if (calcInfoSpan) calcInfoSpan.textContent = `(${(cfg.comissao * 100).toFixed(1).replace('.',',')}% sobre ${formatarMoeda(precoIdeal)})`;
+    if (precoIdealSpan) precoIdealSpan.textContent = formatarMoeda(precoIdeal);
+
+    // 5. Se o gatilho NÃO foi o ajuste manual, atualizamos o input de ajuste
+    if (trigger === 'lucro_global' || trigger === 'frete') {
+        if (ajusteInput) ajusteInput.value = precoIdeal.toFixed(2);
+    }
+    
+    // 6. Calcular o Lucro REAL (D) baseado no preço final (do input de ajuste)
+    const precoFinalAjustado = parseFloat(ajusteInput.value) || 0;
+    const comissaoReal = precoFinalAjustado * cfg.comissao;
+    const receitaLiquida = precoFinalAjustado - comissaoReal - cfg.taxaFixa;
+    const lucroReal = receitaLiquida - custoTotal - freteGratis;
+    const margemReal = (precoFinalAjustado > 0) ? (lucroReal / precoFinalAjustado * 100) : 0;
+    
+    // 7. Atualizar o Extrato (Seção D)
+    if (lucroRealSpan) {
+        lucroRealSpan.textContent = formatarMoeda(lucroReal);
+        lucroRealSpan.classList.toggle('profit-positive', lucroReal >= 0);
+        lucroRealSpan.classList.toggle('profit-negative', lucroReal < 0);
+    }
+    if (margemRealSpan) margemRealSpan.textContent = `${margemReal.toFixed(1).replace('.', ',')}%`;
+
+    // 8. Atualizar a Visão Simples (o cabeçalho do card)
+    if (simplePriceSpan) {
+        simplePriceSpan.textContent = formatarMoeda(precoFinalAjustado);
+        simplePriceSpan.classList.toggle('profit-positive', lucroReal >= 0);
+        simplePriceSpan.classList.toggle('profit-negative', lucroReal < 0);
+    }
+     if (simpleLucroSpan) {
+        simpleLucroSpan.textContent = `Lucro: ${formatarMoeda(lucroReal)}`;
+        simpleLucroSpan.classList.toggle('profit-positive', lucroReal >= 0);
+        simpleLucroSpan.classList.toggle('profit-negative', lucroReal < 0);
+    }
+    if (simpleMargemSpan) simpleMargemSpan.textContent = `(Mg. ${margemReal.toFixed(1).replace('.', ',')}%)`;
+    
+    // 9. Recalcular a Margem Média Geral do Produto (no footer)
+    recalcularMargemMedia(idBaseCard);
+}
+
+// NOVA FUNÇÃO AUXILIAR: Recalcula a média do rodapé
+function recalcularMargemMedia(idBaseCard) {
+    let totalMargem = 0;
+    let totalLojas = 0;
+    
+    Object.keys(lojasConfig).forEach(key => {
+        const idLoja = `${key}-${idBaseCard}`;
+        const margemSpan = document.getElementById(`margem-real-${idLoja}`);
+        if(margemSpan) {
+            const margemValor = parseFloat(margemSpan.textContent.replace('%', '').replace(',', '.')) || 0;
+            totalMargem += margemValor;
+            totalLojas++;
+        }
+    });
+    
+    const margemMedia = totalLojas > 0 ? totalMargem / totalLojas : 0;
+    const margemMediaSpan = document.getElementById(`margem-media-${idBaseCard}`);
+    if (margemMediaSpan) {
+        margemMediaSpan.textContent = `${margemMedia.toFixed(1)}%`.replace('.', ',');
+    }
+}
+
 /**
  * REFEITO (Layout de Card Detalhado):
  * Renderiza um card por produto com controle de lucro global,
@@ -547,7 +666,7 @@ function renderizarProdutosLojas() {
     placeholder.classList.toggle('hidden', itensFiltrados.length > 0);
     if (itensFiltrados.length === 0) return;
 
-    // 5. Construir os CARDS
+    // 5. Construir os CARDS DE PRODUTO (o card roxo escuro)
     itensFiltrados.forEach(item => {
         const custoTotal = item.isKit ? item.custoTotal : (item.custo + item.picking);
         const precoVendaBase = item.precoVenda;
@@ -580,6 +699,7 @@ function renderizarProdutosLojas() {
         `;
 
         // --- 2. Controles do Card (Input de Lucro) ---
+        // ATUALIZADO: 'oninput' agora recalcula todos os cards de loja para este produto
         cardHTML += `
             <div class="precificacao-controls">
                 <label for="lucro-global-${idBase}">💰 Lucro desejado (R$):</label>
@@ -588,49 +708,90 @@ function renderizarProdutosLojas() {
             </div>
         `;
 
-        // --- 3. Lista de Lojas (Com detalhes de Lucro/Margem por loja) ---
+        // --- 3. Lista de Lojas (aqui entram os cards "sanfona") ---
         cardHTML += `<div class="precificacao-lojas-lista">`;
 
         Object.keys(lojasConfig).forEach(key => {
             const loja = lojasConfig[key];
-            // ID único para os elementos DENTRO desta linha de loja
-            const idLoja = `${key}-${idBase}`;
+            const idLoja = `${key}-${idBase}`; // ID único para esta LOJA
 
             cardHTML += `
-                <div class="precificacao-loja-item">
+            <div class="loja-card">
+                <div class="loja-card-simples" onclick="toggleDetalhesLoja('${idLoja}')">
                     <div class="loja-info">
-                        <img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="loja-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/20/0F172A/94a3b8?text=${loja.nome[0]}';">
+                        <img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="loja-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/24/0F172A/94a3b8?text=${loja.nome[0]}';">
                         <span>${loja.nome}</span>
                     </div>
-                    
-                    <div class="loja-resultados">
-                        <span class="loja-preco-sugerido" id="preco-${idLoja}">R$ 0,00</span>
-                        
-                        <span class="loja-detalhe-linha">
-                            Lucro: <span id="lucro-real-${idLoja}">R$ 0,00</span> 
-                            (Mg: <span id="margem-${idLoja}">0.0</span>%)
-                        </span>
-                        
-                        <span class="loja-detalhe-linha">
-                            Comissão (${(loja.comissao * 100).toFixed(1).replace('.',',')}%): 
-                            <span class="text-red-400" id="comissao-valor-${idLoja}">- R$ 0,00</span>
-                        </span>
-                        
-                        <span class="loja-detalhe-linha">
-                            Taxa Fixa: 
-                            <span class="text-red-400" id="taxa-fixa-valor-${idLoja}">- R$ 0,00</span>
-                        </span>
+                    <div class="loja-resultado-simples">
+                        <div class="loja-preco-final" id="simple-price-${idLoja}">R$ 0,00</div>
+                        <span class="loja-lucro-final" id="simple-lucro-${idLoja}">Lucro: R$ 0,00</span>
+                        <span class="loja-margem-final" id="simple-margem-${idLoja}">(Mg. 0,0%)</span>
+                        <div class="loja-toggle-btn" id="toggle-${idLoja}">[Ver Detalhes 🔽]</div>
                     </div>
                 </div>
+                
+                <div class="loja-card-detalhes" id="details-${idLoja}">
+                    <div class="extrato-titulo">🧾 EXTRATO DE PRECIFICAÇÃO (${loja.nome.toUpperCase()})</div>
+                    
+                    <div class="extrato-secao">A. SUA BASE DE CUSTO E LUCRO</div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">Custo Total (Produto + Picking):</span>
+                        <span class="extrato-value" id="custo-${idLoja}">R$ 0,00</span>
+                    </div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">Custo de Frete Grátis:</span>
+                        <input type="number" step="0.01" value="0.00" id="frete-${idLoja}" class="extrato-input" oninput="atualizarCalculoLoja('${key}', ${item.id}, ${item.isKit}, 'frete')">
+                    </div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">Seu Lucro Desejado:</span>
+                        <span class="extrato-value" id="lucro-desejado-${idLoja}">R$ 0,00</span>
+                    </div>
+                    <div class="extrato-linha extrato-linha-final">
+                        <span class="extrato-label"><strong>(=) Subtotal (Sua Base):</strong></span>
+                        <span class="extrato-value" id="subtotal-${idLoja}">R$ 0,00</span>
+                    </div>
+
+                    <div class="extrato-secao">B. TAXAS DA PLATAFORMA</div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">(+) Taxa Fixa:</span>
+                        <span class="extrato-value" id="taxa-fixa-${idLoja}">R$ 0,00</span>
+                    </div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">(+) Comissão: <span class="calc-info" id="calc-info-${idLoja}">(0,0%)</span></span>
+                        <span class="extrato-value" id="comissao-${idLoja}">R$ 0,00</span>
+                    </div>
+
+                    <div class="extrato-secao">C. RESULTADO IDEAL</div>
+                    <div class="extrato-linha extrato-linha-final">
+                        <span class="extrato-label"><strong>(=) Preço Ideal Sugerido:</strong></span>
+                        <span class="extrato-value" id="preco-ideal-${idLoja}">R$ 0,00</span>
+                    </div>
+                    
+                    <div class="extrato-secao">D. AJUSTE MANUAL E LUCRO REAL</div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label">Arredondar Preço Final para:</span>
+                        <input type="number" step="0.01" value="0.00" id="ajuste-${idLoja}" class="extrato-input" oninput="atualizarCalculoLoja('${key}', ${item.id}, ${item.isKit}, 'ajuste')">
+                    </div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label"><strong>(👇) Seu Lucro Real:</strong></span>
+                        <span class="extrato-value" id="lucro-real-${idLoja}">R$ 0,00</span>
+                    </div>
+                    <div class="extrato-linha">
+                        <span class="extrato-label"><strong>(👇) Sua Margem Real:</strong></span>
+                        <span class="extrato-value" id="margem-real-${idLoja}">0,0%</span>
+                    </div>
+                </div>
+            </div>
             `;
         });
 
         cardHTML += `</div>`; // Fim .precificacao-lojas-lista
 
         // --- 4. Footer do Card (Margem Média) ---
+        // ATUALIZADO: 'id' adicionado para que possa ser recalculado
         cardHTML += `
             <div class="precificacao-footer">
-                🧮 Margem média:
+                🧮 Margem média (baseada nos seus ajustes):
                 <span class="font-bold text-white" id="margem-media-${idBase}">0.0%</span>
             </div>
         `;
@@ -641,92 +802,23 @@ function renderizarProdutosLojas() {
         container.innerHTML += cardHTML;
 
         // Dispara o cálculo inicial para este card
+        // A função abaixo irá preencher todos os campos de todas as lojas
         recalcularCardProduto(item.id, item.isKit);
     });
 }
 
 
 /**
- * ATUALIZADO: Recalcula TODOS os preços E os detalhes (lucro/margem)
- * de um card baseado no input de "Lucro desejado" global.
+ * ATUALIZADO: Esta função agora é um "gatilho"
+ * que recalcula TODAS as lojas de um produto
+ * quando o "Lucro desejado" global é alterado.
  */
 function recalcularCardProduto(itemId, isKit) {
-    // 1. Encontrar o item
-    const item = (isKit ? kits : produtos).find(i => i.id === itemId);
-    if (!item) return;
-
-    // 2. ID base do card
-    const idBaseCard = `${itemId}-${isKit}`;
-
-    // 3. Custo Total
-    const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
-
-    // 4. Lucro Desejado do input
-    const lucroInput = document.getElementById(`lucro-global-${idBaseCard}`);
-    if (!lucroInput) return;
-    const lucroDesejado = parseFloat(lucroInput.value) || 0;
-
-    // 5. Variáveis para média
-    let totalMargem = 0;
-    let totalLojas = 0;
-
-    // 6. Loop nas lojas
+    // Para cada loja...
     Object.keys(lojasConfig).forEach(lojaKey => {
-        const cfg = lojasConfig[lojaKey];
-        const idLoja = `${lojaKey}-${idBaseCard}`; // ID base para os elementos desta loja
-
-        // --- O CÁLCULO (igual ao anterior) ---
-        let precoSugerido = 0;
-        const divisor = 1 - cfg.comissao;
-        if (divisor > 0) {
-            precoSugerido = (custoTotal + cfg.taxaFixa + lucroDesejado) / divisor;
-        } else {
-            precoSugerido = custoTotal + cfg.taxaFixa + lucroDesejado;
-        }
-
-        // --- VALORES INTERMEDIÁRIOS ---
-        const lucroReal = (precoSugerido * (1 - cfg.comissao)) - cfg.taxaFixa - custoTotal;
-        const margemReal = precoSugerido > 0 ? (lucroReal / precoSugerido * 100) : 0;
-        const comissaoValor = precoSugerido * cfg.comissao;
-        const taxaFixaValor = cfg.taxaFixa;
-
-        totalMargem += margemReal;
-        totalLojas++;
-
-        // 7. ATUALIZAR os spans na tela (Preço, Lucro Real, Margem, E OS NOVOS DETALHES)
-        const precoSpan = document.getElementById(`preco-${idLoja}`);
-        const lucroRealSpan = document.getElementById(`lucro-real-${idLoja}`);
-        const margemSpan = document.getElementById(`margem-${idLoja}`);
-        const comissaoValorSpan = document.getElementById(`comissao-valor-${idLoja}`);
-        const taxaFixaValorSpan = document.getElementById(`taxa-fixa-valor-${idLoja}`);
-
-        if (precoSpan) {
-            precoSpan.textContent = formatarMoeda(precoSugerido);
-            precoSpan.classList.toggle('text-red-400', lucroReal < 0);
-            precoSpan.classList.toggle('text-green-400', lucroReal >= 0);
-        }
-        if(lucroRealSpan) {
-            lucroRealSpan.textContent = formatarMoeda(lucroReal);
-            lucroRealSpan.classList.toggle('text-green-400', lucroReal >= 0);
-            lucroRealSpan.classList.toggle('text-red-400', lucroReal < 0);
-        }
-        if(margemSpan) {
-            margemSpan.textContent = margemReal.toFixed(1).replace('.', ',');
-        }
-        if(comissaoValorSpan) {
-            comissaoValorSpan.textContent = `- ${formatarMoeda(comissaoValor)}`;
-        }
-        if(taxaFixaValorSpan) {
-            taxaFixaValorSpan.textContent = `- ${formatarMoeda(taxaFixaValor)}`;
-        }
+        // ...chame a calculadora principal informando que o gatilho foi o 'lucro_global'
+        atualizarCalculoLoja(lojaKey, itemId, isKit, 'lucro_global');
     });
-
-    // 8. Calcular e atualizar a Margem Média
-    const margemMedia = totalLojas > 0 ? totalMargem / totalLojas : 0;
-    const margemMediaSpan = document.getElementById(`margem-media-${idBaseCard}`);
-    if (margemMediaSpan) {
-        margemMediaSpan.textContent = `${margemMedia.toFixed(1)}%`.replace('.', ',');
-    }
 }
 
 // --- Kits ---

@@ -172,11 +172,18 @@ body {
 .loja-preco-sugerido.text-green-400 { color: #34d399; }
 .loja-preco-sugerido.text-red-400 { color: #f87171; }
 
-.loja-detalhes {
-    font-size: 0.7rem; /* bem pequeno */
+/* SUBSTITUA O ANTIGO .loja-detalhes POR ISTO: */
+.loja-detalhe-linha {
+    font-size: 0.75rem; /* text-xs */
     color: #9ca3af; /* gray-400 */
-    white-space: nowrap; /* Evita quebra de linha */
+    white-space: nowrap;
 }
+.loja-detalhe-linha span {
+    font-weight: 600; /* semibold */
+    color: #e5e7eb; /* gray-200 */
+}
+.loja-detalhe-linha span.text-green-400 { color: #34d399; }
+.loja-detalhe-linha span.text-red-400 { color: #f87171; }
 
 
 /* Footer (Margem Média) */

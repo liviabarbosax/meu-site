@@ -522,7 +522,6 @@ function verDetalhesCotacao(id) {
 // --- Lojas ---
 
 /**
- /**
  * REFEITO (Layout de Card Detalhado):
  * Renderiza um card por produto com controle de lucro global,
  * mostrando Venda Direta no header e Lucro/Margem por loja na lista.
@@ -622,82 +621,6 @@ function renderizarProdutosLojas() {
                             <span class="text-red-400" id="taxa-fixa-valor-${idLoja}">- R$ 0,00</span>
                         </span>
                     </div>
-                    </div>
-            `;
-        });
-
-        cardHTML += `</div>`; // Fim .precificacao-lojas-lista
-
-        // --- 4. Footer do Card (Margem Média) ---
-        cardHTML += `
-            <div class="precificacao-footer">
-                🧮 Margem média:
-                <span class="font-bold text-white" id="margem-media-${idBase}">0.0%</span>
-            </div>
-        `;
-
-        cardHTML += `</div>`; // Fim .precificacao-card
-
-        // Adiciona o card completo ao container
-        container.innerHTML += cardHTML;
-
-        // Dispara o cálculo inicial para este card
-        recalcularCardProduto(item.id, item.isKit);
-    });
-}d
-
-        // Card principal
-        let cardHTML = `<div class="precificacao-card">`;
-
-        // --- 1. Header do Card (Info do Produto + Venda Direta) ---
-        cardHTML += `
-            <div class="precificacao-header">
-                <img src="${item.imagem || 'https://via.placeholder.com/64'}" alt="${item.nome}" class="precificacao-img" onerror="this.src='https://via.placeholder.com/64';">
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-lg font-bold text-white truncate">${item.nome}</h3>
-                    <p class="text-sm text-gray-400">SKU: ${item.sku}</p>
-                    <p class="text-sm text-gray-400">Custo Total: <span class="font-bold text-red-400">${formatarMoeda(custoTotal)}</span></p>
-                </div>
-                <div class="precificacao-header-stats">
-                    <div>
-                        <span class="text-xs text-gray-400">Venda Direta</span>
-                        <p class="text-base font-bold text-blue-400">${formatarMoeda(precoVendaBase)}</p>
-                    </div>
-                    <div>
-                        <span class="text-xs text-gray-400">Lucro Direto</span>
-                        <p class="text-base font-bold ${lucroVendaBase < 0 ? 'text-red-400' : 'text-green-400'}">${formatarMoeda(lucroVendaBase)}</p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // --- 2. Controles do Card (Input de Lucro) ---
-        cardHTML += `
-            <div class="precificacao-controls">
-                <label for="lucro-global-${idBase}">💰 Lucro desejado (R$):</label>
-                <input type="number" step="0.01" value="10.00" id="lucro-global-${idBase}"
-                       oninput="recalcularCardProduto(${item.id}, ${item.isKit})">
-            </div>
-        `;
-
-        // --- 3. Lista de Lojas (Com detalhes de Lucro/Margem por loja) ---
-        cardHTML += `<div class="precificacao-lojas-lista">`;
-
-        Object.keys(lojasConfig).forEach(key => {
-            const loja = lojasConfig[key];
-            // ID único para os elementos DENTRO desta linha de loja
-            const idLoja = `${key}-${idBase}`;
-
-            cardHTML += `
-                <div class="precificacao-loja-item">
-                    <div class="loja-info">
-                        <img src="assets/logos/${loja.logo}" alt="${loja.nome}" class="loja-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/20/0F172A/94a3b8?text=${loja.nome[0]}';">
-                        <span>${loja.nome}</span>
-                    </div>
-                    <div class="loja-resultados">
-                        <span class="loja-preco-sugerido" id="preco-${idLoja}">R$ 0,00</span>
-                        <span class="loja-detalhes">(Lucro R$ <span id="lucro-real-${idLoja}">0,00</span> | Mg <span id="margem-${idLoja}">0.0</span>%)</span>
-                    </div>
                 </div>
             `;
         });
@@ -723,7 +646,6 @@ function renderizarProdutosLojas() {
 }
 
 
-/**
 /**
  * ATUALIZADO: Recalcula TODOS os preços E os detalhes (lucro/margem)
  * de um card baseado no input de "Lucro desejado" global.

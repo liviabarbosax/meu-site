@@ -12,8 +12,8 @@ body {
 .nav-item.active { background-color: #7F5AF0; border-right: 4px solid #00F5D4; }
 
 /* Notificação */
-.notification { position: fixed; top: 20px; right: 20px; z-index: 1050; transform: translateX(400px); transition: transform 0.3s ease; }
-.notification.show { transform: translateX(0); }
+.notification { position: fixed; top: 20px; right: 20px; z-index: 1050; transform: translateX(calc(100% + 20px)); opacity: 0; transition: transform 0.4s ease-out, opacity 0.4s ease-out; }
+.notification.show { transform: translateX(0); opacity: 1; }
 
 /* Carrinho e Overlay */
 #carrinho-painel {
@@ -22,10 +22,10 @@ body {
     z-index: 1040; transform: translateX(100%); transition: transform 0.3s ease-out;
     display: flex; flex-direction: column;
 }
-@media (min-width: 768px) { #carrinho-painel { width: 40%; } } /* Desktop */
+@media (min-width: 768px) { #carrinho-painel { width: 40%; max-width: 450px; } } /* Desktop */
 #carrinho-painel.show { transform: translateX(0); }
-#carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; } /* Scroll interno */
-#carrinho-itens-lista { padding: 1rem; }
+#carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 1rem;} /* Scroll interno + padding */
+#carrinho-itens-lista { padding: 1rem 1rem 0 1rem; } /* Padding apenas em cima e lados */
 #carrinho-rodape { border-top: 1px solid #334155; padding: 1.5rem; background-color: #16213E; margin-top: auto; flex-shrink: 0; } /* Rodapé fixo no fim do scroll */
 
 #carrinho-overlay {
@@ -34,23 +34,25 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* --- INÍCIO: NOVOS ESTILOS ABA LOJAS (SUBSTITUIR) --- */
+/* --- INÍCIO: NOVOS ESTILOS ABA LOJAS (CALCULADORA VISUAL LIMPA) --- */
 
-/* Variáveis de Cor/Borda para consistência */
+/* Variáveis de Cor/Borda */
 :root {
-    --border-color-light: #334155; /* gray-700 */
-    --border-color-dark: #1e293b;  /* gray-800 */
+    --border-color-light: #334155;
+    --border-color-dark: #1e293b;
     --bg-card: #0F172A;
-    --bg-card-header: #16213E;
+    --bg-card-header: #16213E; /* Cor um pouco mais clara para a calculadora */
     --bg-input: #374151;
-    --text-label: #9ca3af; /* gray-400 */
-    --text-value: #e5e7eb; /* gray-200 */
-    --text-profit: #34d399; /* green-400 */
-    --text-loss: #f87171; /* red-400 */
-    --card-padding: 1.25rem; /* p-5 */
+    --text-label: #9ca3af; /* Cinza mais claro */
+    --text-value: #e5e7eb; /* Branco suave */
+    --text-highlight: #FFFFFF; /* Branco puro para resultados */
+    --text-profit: #34d399; /* Verde */
+    --text-loss: #f87171; /* Vermelho */
+    --text-formula: #a78bfa; /* Roxo mais claro (Tailwind violet-400) */
+    --card-padding: 1.25rem;
 }
 
-/* O Card Principal do Produto (O mesmo de antes) */
+/* O Card Principal do Produto */
 .precificacao-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color-light);
@@ -58,155 +60,84 @@ body {
     padding: var(--card-padding);
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem; /* Aumenta o espaço entre header, controle e calculadoras */
 }
 
-/* Header do Produto (O mesmo de antes) */
+/* Header do Produto e Controles Globais */
 .precificacao-header { display: flex; flex-direction: column; gap: 1rem; }
 @media (min-width: 768px) { .precificacao-header { flex-direction: row; align-items: center; } }
 .precificacao-img { width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--border-color-light); flex-shrink: 0; }
 .precificacao-header-stats { display: flex; gap: 1.5rem; flex-shrink: 0; margin-top: 0.5rem; border-top: 1px solid var(--border-color-light); padding-top: 0.75rem; }
 @media (min-width: 768px) { .precificacao-header-stats { margin-top: 0; margin-left: auto; border-top: none; padding-top: 0; } }
 .precificacao-header-stats div { text-align: right; }
-
-/* Controles Globais (O mesmo de antes) */
-.precificacao-controls { display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-card-header); padding: 0.75rem 1rem; border-radius: 0.5rem; }
-.precificacao-controls label { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; }
+.precificacao-controls { display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-card-header); padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+.precificacao-controls label { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; flex-shrink: 0; }
 .precificacao-controls input[type="number"] { width: 100px; padding: 0.5rem; font-size: 0.9rem; font-weight: 700; text-align: right; background-color: var(--bg-input); border: 1px solid var(--border-color-light); border-radius: 0.375rem; color: white; }
 .precificacao-controls input[type="number"]:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); }
 
-/* Container da Lista de Lojas (Alterado) */
-.precificacao-lojas-lista {
+/* Container das Calculadoras das Lojas */
+.calculadora-lojas-container {
+    display: grid;
+    /* Ajuste para 1 coluna em mobile, 2 em tablet, 3 em desktop */
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 1.25rem;
+    border-top: 1px solid var(--border-color-light);
+    padding-top: 1.5rem;
+}
+@media (min-width: 768px) { /* Tablet: 2 colunas */
+    .calculadora-lojas-container { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1280px) { /* Desktop: 3 colunas */
+    .calculadora-lojas-container { grid-template-columns: repeat(3, 1fr); }
+}
+
+
+/* Card Individual da Calculadora da Loja */
+.calculadora-loja-card {
+    background-color: var(--bg-card-header);
+    border: 1px solid var(--border-color-dark);
+    border-radius: 0.5rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem; /* Espaço entre os cards das lojas */
-    border-top: 1px solid var(--border-color-light);
-    padding-top: 1.25rem;
+    gap: 0.75rem; /* Espaço interno */
+    transition: border-color 0.2s ease-in-out;
+}
+.calculadora-loja-card:hover {
+    border-color: var(--text-formula); /* Roxo no hover */
 }
 
-/* NOVO: O Card "Sanfona" de Cada Loja */
-.loja-card {
-    background-color: var(--bg-card-header);
-    border: 1px solid var(--border-color-light);
-    border-radius: 0.5rem;
-    overflow: hidden; /* Importante para o 'max-height' */
-    transition: all 0.3s ease-in-out;
-}
-.loja-card:hover {
-    border-color: #7F5AF0; /* Destaque no hover */
-}
-
-/* NOVO: A parte "Simples" (cabeçalho clicável) */
-.loja-card-simples {
-    display: flex;
-    flex-direction: column; /* Mobile */
-    justify-content: space-between;
-    padding: 0.75rem var(--card-padding);
-    cursor: pointer;
-}
-@media (min-width: 640px) { /* sm: */
-    .loja-card-simples {
-        flex-direction: row; /* Desktop */
-        align-items: center;
-    }
-}
-
-.loja-card-simples .loja-info {
+.calculadora-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.125rem; /* text-lg */
-    font-weight: 700;
-    color: white;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color-light);
 }
-.loja-logo { width: 24px; height: 24px; object-fit: contain; }
+.loja-logo-calc { width: 24px; height: 24px; object-fit: contain; }
+.loja-nome-calc { font-size: 1.1rem; font-weight: 700; color: white; }
 
-.loja-card-simples .loja-resultado-simples {
-    text-align: right;
-    margin-top: 0.5rem; /* Mobile */
-}
-@media (min-width: 640px) { /* sm: */
-    .loja-card-simples .loja-resultado-simples {
-        margin-top: 0;
-    }
+.calculadora-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem; /* Espaço entre os passos do cálculo */
 }
 
-.loja-preco-final {
-    font-size: 1.125rem; /* text-lg */
-    font-weight: 700;
-}
-.loja-lucro-final { font-size: 0.875rem; /* text-sm */ }
-.loja-margem-final { font-size: 0.875rem; /* text-sm */ color: var(--text-label); }
-.loja-toggle-btn {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #7F5AF0; /* Cor de Ação */
-    margin-top: 4px;
-    user-select: none; /* Impede seleção de texto */
-}
-
-/* Cores de Lucro/Prejuízo */
-.profit-positive { color: var(--text-profit); }
-.profit-negative { color: var(--text-loss); }
-
-/* NOVO: A parte "Detalhada" (o extrato) */
-.loja-card-detalhes {
-    max-height: 0; /* Começa fechado */
-    padding: 0 var(--card-padding); /* Padding lateral */
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
-    border-top: 1px solid var(--border-color-light);
-}
-.loja-card-detalhes.expanded {
-    max-height: 500px; /* Altura máxima para expansão */
-    opacity: 1;
-    padding: var(--card-padding); /* Padding total */
-}
-
-.extrato-titulo {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color-dark);
-    padding-bottom: 0.5rem;
-}
-
-.extrato-secao {
-    font-size: 0.75rem; /* text-xs */
-    font-weight: 600;
-    color: #7F5AF0; /* Cor de destaque */
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.extrato-linha {
+/* Estilo de cada linha/passo do cálculo */
+.calc-step {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.875rem; /* text-sm */
-    padding: 0.35rem 0;
+    font-size: 0.8rem; /* Reduzido para caber mais */
 }
-.extrato-label {
-    color: var(--text-label);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.extrato-label .calc-info {
-    font-size: 0.7rem;
-    color: #555;
-}
-.extrato-value {
-    color: var(--text-value);
-    font-weight: 600;
-}
+.calc-label { color: var(--text-label); }
+.calc-value { color: var(--text-value); font-weight: 600; }
 
-/* Inputs customizados para o extrato */
-.extrato-input {
-    width: 90px;
-    font-size: 0.875rem;
+/* Linhas com Inputs */
+.input-step { align-items: baseline; }
+.calc-input {
+    width: 80px; /* Reduzido */
+    font-size: 0.8rem; /* Reduzido */
     font-weight: 600;
     text-align: right;
     background-color: var(--bg-input);
@@ -215,36 +146,129 @@ body {
     color: white;
     padding: 0.25rem 0.5rem;
 }
-.extrato-input:focus {
+.calc-input:focus {
     outline: none;
     border-color: #7F5AF0;
     box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5);
 }
 
-.extrato-linha-final {
-    border-top: 1px solid var(--border-color-light);
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
+/* Linhas de Subtotal */
+.calc-subtotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem; /* Reduzido */
+    font-weight: 700;
+    color: var(--text-value); /* Cor normal para subtotais intermediários */
+    border-top: 1px dashed var(--border-color-light);
+    padding-top: 0.4rem;
+    margin-top: 0.2rem;
+}
+.calc-subtotal .calc-label { color: var(--text-label); font-weight: 700; }
+.calc-subtotal .calc-value { color: var(--text-value); }
+
+/* Informação adicional (custo) */
+.calc-info {
+    font-size: 0.7rem; /* text-xs */
+    color: var(--text-label);
+    text-align: right;
+    margin-top: -0.2rem;
+    margin-bottom: 0.2rem;
 }
 
-/* O Footer do Card de Produto (O mesmo de antes) */
+/* Subtotal final antes da divisão */
+.final-subtotal {
+    border-top-style: solid;
+    color: var(--text-highlight); /* Branco forte */
+}
+.final-subtotal .calc-label { color: var(--text-highlight); }
+.final-subtotal .calc-value { color: var(--text-highlight); }
+
+
+/* Passo da Fórmula (Divisão) */
+.formula-step {
+    justify-content: flex-end;
+    font-size: 0.75rem; /* Mais sutil */
+    font-style: italic;
+    color: var(--text-formula);
+    margin-top: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+/* Resultado do Preço Ideal */
+.calc-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+}
+.calc-result .calc-label { color: var(--text-highlight); font-weight: 700; }
+.calc-result .calc-value { font-weight: 700; } /* Cor definida abaixo */
+
+.ideal-price {
+    font-size: 0.9rem; /* Tamanho médio */
+    background-color: rgba(167, 139, 250, 0.1); /* Fundo roxo bem sutil */
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.25rem;
+    margin-top: 0.2rem;
+    border: 1px solid var(--text-formula); /* Borda roxa */
+}
+.ideal-price .calc-label { color: var(--text-formula); } /* Label roxo */
+.ideal-price .calc-value { color: var(--text-formula); } /* Valor roxo */
+
+/* Ajuste Final e Resultados Finais */
+.final-adjust { margin-top: 1rem; align-items: center; } /* Alinha verticalmente */
+.final-price-input {
+    font-size: 0.9rem;
+    width: 90px;
+    padding: 0.4rem 0.6rem;
+    border-color: #7F5AF0; /* Borda roxa para indicar que é editável */
+}
+
+.final-output {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color-light);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.lucro-final, .margem-final {
+    font-size: 0.9rem; /* Aumenta um pouco */
+}
+.lucro-final .calc-value, .margem-final .calc-value {
+    font-size: 1rem; /* Valor final bem destacado */
+    /* Cores aplicadas via JS com profit-positive/negative */
+}
+
+/* Cores de Lucro/Prejuízo */
+.profit-positive { color: var(--text-profit) !important; } /* Usa !important para garantir sobreposição */
+.profit-negative { color: var(--text-loss) !important; }
+
+/* O Footer do Card de Produto */
 .precificacao-footer {
     border-top: 1px solid var(--border-color-light);
     padding-top: 1rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     font-size: 0.9rem;
     color: var(--text-label);
     text-align: right;
 }
+.precificacao-footer span {
+    font-size: 1rem;
+    font-weight: bold;
+    /* Cores aplicadas via JS */
+}
 
-/* --- FIM: NOVOS ESTILOS ABA LOJAS --- */
 
-/* Garante que o container de scroll não exista mais */
+/* Garante que o container de scroll não exista mais na div principal da aba */
 #lista-produtos-lojas-container {
     max-height: none;
     overflow-y: visible;
 }
 
 /* Inputs gerais (ESSES FICAM) */
-.form-input { width: 100%; padding: 0.75rem; background-color: #374151; /* gray-700 */ border: 1px solid #4B5563; /* gray-600 */ border-radius: 0.5rem; /* rounded-lg */ color: white; }
-.form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); } /* Estilo de foco */
+.form-input { width: 100%; padding: 0.75rem; background-color: #374151; border: 1px solid #4B5563; border-radius: 0.5rem; color: white; }
+.form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); }
+
+/* --- FIM: NOVOS ESTILOS ABA LOJAS --- */

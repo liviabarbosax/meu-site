@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DropShip Pro v2.1 - Gestão Otimizada</title>
-    
+
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="custom-bg custom-text h-screen overflow-hidden">
@@ -22,14 +22,14 @@
                     <li> <a href="#" onclick="showPage('produtos')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📦</span> Produtos </a> </li>
                     <li> <a href="#" onclick="showPage('catalogo')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">📋</span> Catálogo </a> </li>
                     <li> <a href="#" onclick="showPage('cotacoes')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💰</span> Cotações </a> </li>
-                    <li> <a href="#" onclick="showPage('lojas')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🏪</span> Lojas </a> </li>
+                    {/* REMOVIDO: Link Lojas */}
                     <li> <a href="#" onclick="showPage('kits')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🧩</span> Kits </a> </li>
                     <li> <a href="#" onclick="showPage('financeiro')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">💳</span> Financeiro </a> </li>
                     <li> <a href="#" onclick="showPage('marketing')" class="nav-item flex items-center p-3 rounded-lg text-gray-300 hover:text-white"> <span class="mr-3">🎫</span> Marketing </a> </li>
                 </ul>
             </div>
         </nav>
-        
+
         <main class="ml-64 flex-1 p-8 overflow-y-auto">
             <div id="dashboard-page" class="page-content">
                 <h2 class="text-3xl font-bold mb-8 text-white">📊 Dashboard</h2>
@@ -120,7 +120,8 @@
                     </div>
                 </div>
                 <div id="catalogo-lista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    </div>
+                    {/* Os cards dos produtos serão inseridos aqui pelo JS */}
+                </div>
             </div>
 
             <div id="cotacoes-page" class="page-content hidden">
@@ -139,22 +140,12 @@
                         </select>
                     </div>
                     <div id="lista-cotacoes" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                        </div>
-                </div>
-            </div>
-            
-<div id="lojas-page" class="page-content hidden">
-                <h2 class="text-3xl font-bold mb-8 text-white">🏪 Precificação por Loja</h2>
-                <div class="custom-card rounded-lg p-6 mb-6">
-                    <h3 class="text-xl font-semibold mb-4 text-white">🔍 Filtro</h3>
-                    <input type="text" id="filtro-lojas" placeholder="Buscar produto ou kit por nome/SKU..." class="form-input w-full md:w-1/2">
-                </div>
-                
-                <div id="lista-produtos-lojas-container" class="space-y-6">
+                        {/* A lista de cotações será inserida aqui */}
                     </div>
-                <div id="lojas-placeholder" class="text-center text-gray-400 py-10 hidden">Nenhum item encontrado.</div>
-                
+                </div>
             </div>
+
+            {/* REMOVIDO: Conteúdo da página Lojas */}
 
             <div id="kits-page" class="page-content hidden">
                 <h2 class="text-3xl font-bold mb-8 text-white">🧩 Kits e Estratégias</h2>
@@ -175,7 +166,7 @@
                                 <label for="kit-preco-venda" class="block text-sm font-medium mb-1">Preço Venda Direta (R$) *</label>
                                 <input type="number" id="kit-preco-venda" step="0.01" required value="0.00" class="form-input text-sm">
                                 <p class="text-xs text-gray-400 mt-1">Custo Total: <span id="kit-custo-total">R$ 0,00</span></p>
-                                <p class="text-xs text-purple-400 mt-1">Preços por loja na Aba Lojas.</p>
+                                <p class="text-xs text-purple-400 mt-1">Precificação por loja via Catálogo.</p> {/* Texto atualizado */}
                             </div>
                             <div class="flex gap-3 pt-2">
                                 <button type="submit" class="flex-1 custom-accent custom-accent-hover text-white py-2 px-3 rounded-lg font-medium text-sm">💾 Salvar</button>
@@ -263,24 +254,17 @@
                 </div>
             </div>
         </main>
-    </div> <div id="carrinho-overlay" onclick="fecharCarrinho()"></div>
-
-    <div id="notification" class="notification bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
-        <span id="notification-text"></span>
     </div>
 
-    <button onclick="abrirCarrinho()" class="fixed bottom-8 right-8 custom-accent custom-accent-hover text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl z-[1035]">
-        🛒
-        <span id="carrinho-contador" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
-    </button>
-
+    {/* Overlay e Painel do Carrinho (Mantidos) */}
+    <div id="carrinho-overlay" onclick="fecharCarrinho()"></div>
     <aside id="carrinho-painel">
         <div class="flex justify-between items-center p-6 border-b border-gray-700 flex-shrink-0">
             <h3 class="text-2xl font-bold text-white">🛒 Carrinho</h3>
             <button onclick="fecharCarrinho()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
         </div>
         <div id="carrinho-conteudo-scroll">
-            <div id="carrinho-itens-lista" class="flex-grow"> </div>
+            <div id="carrinho-itens-lista" class="flex-grow"> {/* Conteúdo do carrinho aqui */} </div>
             <div id="carrinho-rodape">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label for="carrinho-descontos" class="block text-xs font-medium mb-1">Descontos (R$)</label><input type="number" id="carrinho-descontos" value="0" step="0.01" class="form-input text-sm p-2"></div>
@@ -322,7 +306,18 @@
             </div>
         </div>
     </aside>
-    
+
+    {/* Botão Flutuante Carrinho e Notificação (Mantidos) */}
+    <div id="notification" class="notification">
+        <span id="notification-text"></span>
+    </div>
+    <button onclick="abrirCarrinho()" class="fixed bottom-8 right-8 custom-accent custom-accent-hover text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl z-[1035]">
+        🛒
+        <span id="carrinho-contador" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+    </button>
+
+    {/* O Modal de Precificação será adicionado aqui pelo JS */}
+
     <script src="script.js" defer></script>
 </body>
 </html>

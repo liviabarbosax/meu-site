@@ -1,6 +1,5 @@
-body {
-    /* box-sizing: border-box;  <- REMOVIDO (Tailwind já faz) */
-}
+/* Estilos Gerais (Mantidos) */
+body { /* box-sizing já tratado por Tailwind */ }
 .custom-bg { background-color: #1A1A2E; }
 .custom-accent { background-color: #7F5AF0; }
 .custom-accent-hover:hover { background-color: #6B46C1; }
@@ -11,22 +10,22 @@ body {
 .nav-item:hover { background-color: #7F5AF0; transform: translateX(4px); }
 .nav-item.active { background-color: #7F5AF0; border-right: 4px solid #00F5D4; }
 
-/* Notificação */
+/* Notificação (Mantida) */
 .notification { position: fixed; top: 20px; right: 20px; z-index: 1050; transform: translateX(calc(100% + 20px)); opacity: 0; transition: transform 0.4s ease-out, opacity 0.4s ease-out; }
 .notification.show { transform: translateX(0); opacity: 1; }
 
-/* Carrinho e Overlay */
+/* Carrinho e Overlay (Mantidos) */
 #carrinho-painel {
-    position: fixed; top: 0; right: 0; width: 90%; /* Mobile */ max-width: 500px; /* Limite máximo */ height: 100%;
+    position: fixed; top: 0; right: 0; width: 90%; max-width: 500px; height: 100%;
     background-color: #16213E; box-shadow: -10px 0 20px rgba(0,0,0,0.3);
     z-index: 1040; transform: translateX(100%); transition: transform 0.3s ease-out;
     display: flex; flex-direction: column;
 }
-@media (min-width: 768px) { #carrinho-painel { width: 40%; max-width: 450px; } } /* Desktop */
+@media (min-width: 768px) { #carrinho-painel { width: 40%; max-width: 450px; } }
 #carrinho-painel.show { transform: translateX(0); }
-#carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 1rem;} /* Scroll interno + padding */
-#carrinho-itens-lista { padding: 1rem 1rem 0 1rem; } /* Padding apenas em cima e lados */
-#carrinho-rodape { border-top: 1px solid #334155; padding: 1.5rem; background-color: #16213E; margin-top: auto; flex-shrink: 0; } /* Rodapé fixo no fim do scroll */
+#carrinho-conteudo-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 1rem;}
+#carrinho-itens-lista { padding: 1rem 1rem 0 1rem; }
+#carrinho-rodape { border-top: 1px solid #334155; padding: 1.5rem; background-color: #16213E; margin-top: auto; flex-shrink: 0; }
 
 #carrinho-overlay {
     position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1030;
@@ -34,241 +33,278 @@ body {
 }
 #carrinho-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* --- INÍCIO: NOVOS ESTILOS ABA LOJAS (CALCULADORA VISUAL LIMPA) --- */
+/* --- INÍCIO: NOVOS ESTILOS PARA PRECIFICACAO NO MODAL --- */
 
 /* Variáveis de Cor/Borda */
 :root {
-    --border-color-light: #334155;
-    --border-color-dark: #1e293b;
-    --bg-card: #0F172A;
-    --bg-card-header: #16213E; /* Cor um pouco mais clara para a calculadora */
-    --bg-input: #374151;
-    --text-label: #9ca3af; /* Cinza mais claro */
-    --text-value: #e5e7eb; /* Branco suave */
-    --text-highlight: #FFFFFF; /* Branco puro para resultados */
-    --text-profit: #34d399; /* Verde */
-    --text-loss: #f87171; /* Vermelho */
-    --text-formula: #a78bfa; /* Roxo mais claro (Tailwind violet-400) */
-    --card-padding: 1.25rem;
+    --modal-border-color: #334155;
+    --modal-bg: #16213E; /* Fundo do Modal (mesmo da sidebar) */
+    --modal-card-bg: #0F172A; /* Fundo dos cards internos (mesmo dos cards normais) */
+    --modal-input-bg: #374151;
+    --modal-text-label: #9ca3af;
+    --modal-text-value: #e5e7eb;
+    --modal-text-highlight: #FFFFFF;
+    --modal-text-profit: #34d399;
+    --modal-text-loss: #f87171;
+    --modal-accent: #7F5AF0;
 }
 
-/* O Card Principal do Produto */
-.precificacao-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color-light);
-    border-radius: 0.5rem;
-    padding: var(--card-padding);
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* Aumenta o espaço entre header, controle e calculadoras */
-}
-
-/* Header do Produto e Controles Globais */
-.precificacao-header { display: flex; flex-direction: column; gap: 1rem; }
-@media (min-width: 768px) { .precificacao-header { flex-direction: row; align-items: center; } }
-.precificacao-img { width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--border-color-light); flex-shrink: 0; }
-.precificacao-header-stats { display: flex; gap: 1.5rem; flex-shrink: 0; margin-top: 0.5rem; border-top: 1px solid var(--border-color-light); padding-top: 0.75rem; }
-@media (min-width: 768px) { .precificacao-header-stats { margin-top: 0; margin-left: auto; border-top: none; padding-top: 0; } }
-.precificacao-header-stats div { text-align: right; }
-.precificacao-controls { display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-card-header); padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem; }
-.precificacao-controls label { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; flex-shrink: 0; }
-.precificacao-controls input[type="number"] { width: 100px; padding: 0.5rem; font-size: 0.9rem; font-weight: 700; text-align: right; background-color: var(--bg-input); border: 1px solid var(--border-color-light); border-radius: 0.375rem; color: white; }
-.precificacao-controls input[type="number"]:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); }
-
-/* Container das Calculadoras das Lojas */
-.calculadora-lojas-container {
-    display: grid;
-    /* Ajuste para 1 coluna em mobile, 2 em tablet, 3 em desktop */
-    grid-template-columns: 1fr; /* Mobile: 1 coluna */
-    gap: 1.25rem;
-    border-top: 1px solid var(--border-color-light);
-    padding-top: 1.5rem;
-}
-@media (min-width: 768px) { /* Tablet: 2 colunas */
-    .calculadora-lojas-container { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1280px) { /* Desktop: 3 colunas */
-    .calculadora-lojas-container { grid-template-columns: repeat(3, 1fr); }
-}
-
-
-/* Card Individual da Calculadora da Loja */
-.calculadora-loja-card {
-    background-color: var(--bg-card-header);
-    border: 1px solid var(--border-color-dark);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem; /* Espaço interno */
-    transition: border-color 0.2s ease-in-out;
-}
-.calculadora-loja-card:hover {
-    border-color: var(--text-formula); /* Roxo no hover */
-}
-
-.calculadora-header {
+/* Botão de Precificar no Card do Catálogo */
+.precificacao-btn {
+    flex: 0.8; /* Um pouco menor que os outros botões */
+    background-color: #4a5568; /* Cinza */
+    color: white;
+    padding: 4px 8px; /* Mais compacto */
+    border-radius: 0.375rem; /* rounded-md */
+    font-size: 0.7rem; /* Menor */
+    font-weight: 600;
+    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color-light);
+    justify-content: center;
 }
-.loja-logo-calc { width: 24px; height: 24px; object-fit: contain; }
-.loja-nome-calc { font-size: 1.1rem; font-weight: 700; color: white; }
+.precificacao-btn:hover {
+    background-color: #2d3748; /* Cinza mais escuro */
+}
 
-.calculadora-body {
+/* Overlay do Modal de Precificação */
+.modal-precificacao-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7); /* Mais escuro que o do carrinho */
+    z-index: 1060; /* Acima do overlay do carrinho */
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem; /* Espaçamento das bordas da tela */
+}
+.modal-precificacao-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Corpo Principal do Modal */
+.modal-precificacao {
+    background-color: var(--modal-bg);
+    border: 1px solid var(--modal-border-color);
+    border-radius: 0.75rem; /* Mais arredondado */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 700px; /* Largura máxima */
+    max-height: 90vh; /* Altura máxima */
     display: flex;
     flex-direction: column;
-    gap: 0.4rem; /* Espaço entre os passos do cálculo */
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.modal-precificacao-overlay.show .modal-precificacao {
+    transform: scale(1);
+    opacity: 1;
 }
 
-/* Estilo de cada linha/passo do cálculo */
-.calc-step {
+/* Cabeçalho do Modal (Título e Botão Fechar) */
+.modal-precificacao-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.8rem; /* Reduzido para caber mais */
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--modal-border-color);
+    flex-shrink: 0; /* Não encolher */
 }
-.calc-label { color: var(--text-label); }
-.calc-value { color: var(--text-value); font-weight: 600; }
+.modal-precificacao-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 1rem;
+}
+.modal-precificacao-close-btn {
+    background: none;
+    border: none;
+    color: var(--modal-text-label);
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.modal-precificacao-close-btn:hover {
+    color: white;
+}
 
-/* Linhas com Inputs */
-.input-step { align-items: baseline; }
-.calc-input {
-    width: 80px; /* Reduzido */
-    font-size: 0.8rem; /* Reduzido */
+/* Área de Conteúdo do Modal (com scroll) */
+.modal-precificacao-content {
+    padding: 1.5rem;
+    overflow-y: auto; /* Scroll vertical */
+    flex-grow: 1; /* Ocupa espaço disponível */
+}
+
+/* Header do Produto DENTRO do Modal */
+.modal-product-header {
+    display: flex;
+    flex-direction: column; /* Mobile first */
+    gap: 1rem;
+    background-color: var(--modal-card-bg); /* Fundo sutil */
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+@media (min-width: 640px) { /* sm: */
+    .modal-product-header { flex-direction: row; align-items: flex-start; }
+}
+
+.modal-product-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 0.375rem;
+    border: 1px solid var(--modal-border-color);
+    flex-shrink: 0;
+    align-self: center; /* Centraliza imagem no mobile */
+}
+@media (min-width: 640px) {
+    .modal-product-image { align-self: flex-start; }
+}
+
+
+.modal-product-info {
+    font-size: 0.875rem; /* text-sm */
+    color: var(--modal-text-value);
+    flex-grow: 1;
+}
+.modal-product-info span { color: var(--modal-text-label); } /* Rótulos */
+.modal-product-info strong { color: white; font-weight: 600; } /* Valores */
+
+/* Card de Precificação por Loja DENTRO do Modal */
+.modal-store-card {
+    background-color: var(--modal-card-bg);
+    border: 1px solid var(--modal-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem; /* Espaço entre cards de loja */
+    transition: border-color 0.2s ease;
+}
+.modal-store-card:hover {
+    border-color: var(--modal-accent);
+}
+
+.store-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--modal-border-color);
+}
+.store-info { display: flex; align-items: center; gap: 0.75rem; }
+.store-logo { width: 24px; height: 24px; object-fit: contain; }
+.store-name { font-size: 1rem; font-weight: 700; color: white; }
+.store-config { font-size: 0.7rem; color: var(--modal-text-label); text-align: right;}
+
+.store-pricing-body {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 0.75rem; /* Espaço entre as linhas */
+}
+@media (min-width: 640px) { /* Desktop: 2 colunas */
+    .store-pricing-body { grid-template-columns: repeat(2, 1fr); gap: 0.75rem 1.5rem; }
+}
+
+
+.store-pricing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem; /* Pequeno */
+}
+.store-pricing-label { color: var(--modal-text-label); display: flex; align-items: center; }
+.store-pricing-value { color: var(--modal-text-value); font-weight: 600; text-align: right; }
+.store-pricing-detail { color: var(--modal-text-label); font-size: 0.7rem; margin-left: 4px; } /* Detalhe taxa */
+
+/* Inputs dentro do card da loja */
+.store-input {
+    width: 90px;
+    font-size: 0.8rem;
     font-weight: 600;
     text-align: right;
-    background-color: var(--bg-input);
-    border: 1px solid var(--border-color-light);
+    background-color: var(--modal-input-bg);
+    border: 1px solid var(--modal-border-color);
     border-radius: 0.375rem;
     color: white;
     padding: 0.25rem 0.5rem;
 }
-.calc-input:focus {
+.store-input:focus {
     outline: none;
-    border-color: #7F5AF0;
+    border-color: var(--modal-accent);
     box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5);
 }
 
-/* Linhas de Subtotal */
-.calc-subtotal {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem; /* Reduzido */
-    font-weight: 700;
-    color: var(--text-value); /* Cor normal para subtotais intermediários */
-    border-top: 1px dashed var(--border-color-light);
-    padding-top: 0.4rem;
-    margin-top: 0.2rem;
-}
-.calc-subtotal .calc-label { color: var(--text-label); font-weight: 700; }
-.calc-subtotal .calc-value { color: var(--text-value); }
-
-/* Informação adicional (custo) */
-.calc-info {
-    font-size: 0.7rem; /* text-xs */
-    color: var(--text-label);
-    text-align: right;
-    margin-top: -0.2rem;
-    margin-bottom: 0.2rem;
-}
-
-/* Subtotal final antes da divisão */
-.final-subtotal {
-    border-top-style: solid;
-    color: var(--text-highlight); /* Branco forte */
-}
-.final-subtotal .calc-label { color: var(--text-highlight); }
-.final-subtotal .calc-value { color: var(--text-highlight); }
-
-
-/* Passo da Fórmula (Divisão) */
-.formula-step {
-    justify-content: flex-end;
-    font-size: 0.75rem; /* Mais sutil */
-    font-style: italic;
-    color: var(--text-formula);
-    margin-top: 0.5rem;
-    margin-bottom: 0.2rem;
-}
-
-/* Resultado do Preço Ideal */
-.calc-result {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 700;
-}
-.calc-result .calc-label { color: var(--text-highlight); font-weight: 700; }
-.calc-result .calc-value { font-weight: 700; } /* Cor definida abaixo */
-
-.ideal-price {
-    font-size: 0.9rem; /* Tamanho médio */
-    background-color: rgba(167, 139, 250, 0.1); /* Fundo roxo bem sutil */
-    padding: 0.4rem 0.6rem;
-    border-radius: 0.25rem;
-    margin-top: 0.2rem;
-    border: 1px solid var(--text-formula); /* Borda roxa */
-}
-.ideal-price .calc-label { color: var(--text-formula); } /* Label roxo */
-.ideal-price .calc-value { color: var(--text-formula); } /* Valor roxo */
-
-/* Ajuste Final e Resultados Finais */
-.final-adjust { margin-top: 1rem; align-items: center; } /* Alinha verticalmente */
-.final-price-input {
+/* Linha do Preço Ideal Sugerido */
+.ideal-price-row .store-pricing-value {
+    color: var(--modal-accent); /* Roxo */
     font-size: 0.9rem;
-    width: 90px;
-    padding: 0.4rem 0.6rem;
-    border-color: #7F5AF0; /* Borda roxa para indicar que é editável */
 }
 
-.final-output {
-    margin-top: 0.75rem;
+/* Linha do Preço Final Ajustável */
+.final-price-row { grid-column: 1 / -1; } /* Ocupa toda a largura */
+.final-price-row .store-input {
+    font-size: 0.9rem;
+    width: 100px;
+    border-color: var(--modal-accent); /* Destaca que é editável */
+}
+
+/* Linha do Lucro/Margem Real */
+.final-result-row {
+    grid-column: 1 / -1; /* Ocupa toda a largura */
+    border-top: 1px dashed var(--modal-border-color);
     padding-top: 0.75rem;
-    border-top: 1px solid var(--border-color-light);
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+    margin-top: 0.25rem;
+    font-size: 0.9rem; /* Maior */
 }
-.lucro-final, .margem-final {
-    font-size: 0.9rem; /* Aumenta um pouco */
-}
-.lucro-final .calc-value, .margem-final .calc-value {
-    font-size: 1rem; /* Valor final bem destacado */
-    /* Cores aplicadas via JS com profit-positive/negative */
-}
+.final-result-row .store-pricing-value { font-size: 0.95rem; } /* Valor ainda maior */
+.profit-positive { color: var(--modal-text-profit) !important; }
+.profit-negative { color: var(--modal-text-loss) !important; }
 
-/* Cores de Lucro/Prejuízo */
-.profit-positive { color: var(--text-profit) !important; } /* Usa !important para garantir sobreposição */
-.profit-negative { color: var(--text-loss) !important; }
 
-/* O Footer do Card de Produto */
-.precificacao-footer {
-    border-top: 1px solid var(--border-color-light);
-    padding-top: 1rem;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: var(--text-label);
+/* Rodapé do Modal */
+.modal-precificacao-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--modal-border-color);
     text-align: right;
+    flex-shrink: 0;
 }
-.precificacao-footer span {
-    font-size: 1rem;
-    font-weight: bold;
-    /* Cores aplicadas via JS */
+.modal-close-button {
+    background-color: #4a5568; /* Cinza */
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.modal-close-button:hover {
+    background-color: #2d3748; /* Cinza mais escuro */
 }
 
-
-/* Garante que o container de scroll não exista mais na div principal da aba */
-#lista-produtos-lojas-container {
-    max-height: none;
-    overflow-y: visible;
-}
-
-/* Inputs gerais (ESSES FICAM) */
+/* Inputs gerais (Mantido) */
 .form-input { width: 100%; padding: 0.75rem; background-color: #374151; border: 1px solid #4B5563; border-radius: 0.5rem; color: white; }
 .form-input:focus { outline: none; border-color: #7F5AF0; box-shadow: 0 0 0 2px rgba(127, 90, 240, 0.5); }
 
-/* --- FIM: NOVOS ESTILOS ABA LOJAS --- */
+/* Remove estilos antigos da aba Lojas (se existirem) */
+.precificacao-card, .precificacao-header, .precificacao-img, .precificacao-header-stats,
+.precificacao-controls, .precificacao-lojas-lista, .precificacao-loja-item,
+.loja-info, .loja-logo, .loja-resultados, .loja-preco-sugerido, .loja-detalhes,
+.precificacao-footer, #lista-produtos-lojas-container {
+    /* Não são mais usados, mas não devem conflitar. A remoção total seria ideal,
+       mas redefinir alguns pode ser seguro se não tiver certeza. */
+}
+#lista-produtos-lojas-container { display: none; } /* Esconde o container antigo */
+
+/* --- FIM: NOVOS ESTILOS PARA PRECIFICACAO NO MODAL --- */

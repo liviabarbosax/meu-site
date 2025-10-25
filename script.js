@@ -1,17 +1,18 @@
 // --- Dados Persistentes (Lidos apenas uma vez) ---
 let fornecedores = JSON.parse(localStorage.getItem('fornecedores')) || ['Fornecedor Exemplo'];
-let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+let produtos = JSON.parse(localStorage.getItem('produtos')) || []; // Contém { ..., variations: [...], pricingConfig: { shopee: 15.00, ... } }
 let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
 let cotacoes = JSON.parse(localStorage.getItem('cotacoes')) || [];
 let kits = JSON.parse(localStorage.getItem('kits')) || [];
 let cupons = JSON.parse(localStorage.getItem('cupons')) || [];
 
 // --- Variáveis de Estado (Memória Temporária) ---
-let kitProdutosTemporario = [];
-let produtoEditId = null;
-let cotacaoAtual = null;
-let modalAtual = null; // Usado para modais de confirmação/detalhes
-let modalPrecificacaoAberto = false; // Flag para o novo modal
+let kitProdutosTemporario = []; // Para montar/editar kits
+let produtoEditId = null; // ID do produto sendo editado
+let produtoVariationsTemporario = []; // Para montar/editar variações
+let cotacaoAtual = null; // Para gerar cotação no carrinho
+let modalAtual = null; // Para modais genéricos (confirmação/detalhes)
+let modalPrecificacaoAberto = false; // Flag para o modal de precificação
 
 // --- Configurações de Lojas (Constante) ---
 const lojasConfig = {
@@ -32,9 +33,9 @@ function salvarDados(chave, dados) {
 document.addEventListener('DOMContentLoaded', () => {
     atualizarDropdownFornecedores();
     renderizarCarrinho();
-    showPage('dashboard');
+    showPage('dashboard'); // Página inicial
 
-    // --- Event Listeners ---
+    // --- Event Listeners Globais ---
     document.getElementById('carrinho-descontos').addEventListener('input', calcularTotais);
     document.getElementById('carrinho-frete').addEventListener('input', calcularTotais);
     document.getElementById('filtro-status-cotacao').addEventListener('change', renderizarCotacoes);
@@ -43,8 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('kit-form').addEventListener('submit', handleSalvarKit);
     document.getElementById('filtro-produtos-kit').addEventListener('input', filtrarProdutosParaKit);
     document.getElementById('cupom-form').addEventListener('submit', salvarCupom);
-    // REMOVIDO: document.getElementById('filtro-lojas').addEventListener('input', renderizarProdutosLojas);
+    document.getElementById('filtro-busca').addEventListener('input', aplicarFiltros); // Filtro catálogo geral
+    document.getElementById('filtro-categoria').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtro-fornecedor').addEventListener('change', aplicarFiltros);
     document.getElementById('produto-imagem').addEventListener('change', previewImagemProduto);
+    document.getElementById('filtro-kits').addEventListener('input', renderizarListaKits); // Filtro na página de Kits
+    document.getElementById('filtro-cupons').addEventListener('input', renderizarListaCupons); // Filtro na página de Marketing
 
     // Event listener para fechar modal de precificação clicando no overlay
     document.body.addEventListener('click', (event) => {
@@ -56,50 +61,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Navegação e Exibição ---
 function showPage(pageId) {
-    // Esconde todas as páginas e mostra a selecionada
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
     const pageElement = document.getElementById(pageId + '-page');
     if (pageElement) {
         pageElement.classList.remove('hidden');
     } else {
-        console.error(`Página com ID ${pageId}-page não encontrada!`);
-        // Opcional: redirecionar para dashboard ou mostrar erro
+        console.error(`Página com ID ${pageId}-page não encontrada! Redirecionando para Dashboard.`);
         document.getElementById('dashboard-page')?.classList.remove('hidden');
-        pageId = 'dashboard'; // Atualiza pageId para marcar o item correto no menu
+        pageId = 'dashboard';
     }
 
-
-    // Atualiza o item ativo na sidebar
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
-        // Verifica se o onclick do item corresponde à página atual
         if (item.getAttribute('onclick')?.includes(`showPage('${pageId}')`)) {
             item.classList.add('active');
         }
     });
 
-    // Rola para o topo
     const mainContent = document.querySelector('main');
     if (mainContent) mainContent.scrollTop = 0;
 
-    // Lógica específica ao carregar
     switch (pageId) {
         case 'dashboard': calcularDashboard(); break;
-        case 'produtos': if (!produtoEditId) limparFormularioProduto(); break;
+        case 'produtos':
+            // ===== INÍCIO DA CORREÇÃO 1.1 (Bug Edição) =====
+            // A limpeza agora é tratada pelo clique (index.html) ou por 'irParaCadastroProduto()'
+            // limparFormularioProduto(); // REMOVIDO
+            // ===== FIM DA CORREÇÃO 1.1 =====
+            break;
         case 'catalogo': carregarFiltrosCatalogo(); aplicarFiltros(); break;
         case 'cotacoes': renderizarCotacoes(); break;
-        // REMOVIDO: case 'lojas': renderizarProdutosLojas(); break;
+        // Lojas removida
         case 'kits': inicializarPaginaKits(); break;
         case 'financeiro': calcularEstatisticasFinanceiras(); break;
         case 'marketing': inicializarPaginaMarketing(); break;
     }
     fecharCarrinho();
-    fecharModalPrecificacao(); // Garante que o modal de precificação feche ao navegar
+    fecharModalPrecificacao(); // Garante que feche ao navegar
 }
-function irParaCadastroProduto() { showPage('produtos'); limparFormularioProduto(); }
+
+// ===== INÍCIO DA CORREÇÃO 1.2 (Bug Edição) =====
+function irParaCadastroProduto() { 
+    limparFormularioProduto(); // Garante que o formulário esteja limpo
+    showPage('produtos'); 
+}
+// ===== FIM DA CORREÇÃO 1.2 =====
 
 // --- Dashboard ---
-// ... (código do Dashboard - calcularDashboard, renderizarCotacoesPendentesDashboard - permanece o mesmo) ...
+// ... (código do Dashboard permanece o mesmo) ...
 function calcularDashboard() {
     const hoje = new Date();
     const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -110,7 +119,8 @@ function calcularDashboard() {
     let lucroMes = 0;
     cotacoesConvertidasMes.forEach(cotacao => {
         cotacao.itens.forEach(item => {
-            const custoItem = item.isKit ? item.custo : (item.custo + item.picking);
+            // Assume que 'custo' no item da cotação já é o custo total (produto+picking ou kit)
+            const custoItem = item.custo || 0; // Se não houver custo registrado, assume 0
             lucroMes += (item.precoVenda - custoItem) * item.quantidade;
         });
         lucroMes += (parseFloat(cotacao.frete.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0);
@@ -118,17 +128,16 @@ function calcularDashboard() {
     });
 
     const cotacoesPendentes = cotacoes.filter(c => c.status === 'Pendente').length;
-    const totalProdutos = produtos.length; // Inclui produtos normais apenas
+    const totalProdutos = produtos.length; // Apenas produtos base, sem contar kits ou variações como itens separados aqui.
 
     document.getElementById('dash-vendas-mes').textContent = formatarMoeda(vendasMes);
     document.getElementById('dash-lucro-mes').textContent = formatarMoeda(lucroMes);
     document.getElementById('dash-cotacoes-pendentes').textContent = cotacoesPendentes;
-    document.getElementById('dash-total-produtos').textContent = totalProdutos; // Considerar adicionar Kits aqui se desejado
+    document.getElementById('dash-total-produtos').textContent = totalProdutos;
     renderizarCotacoesPendentesDashboard();
 }
-
 function renderizarCotacoesPendentesDashboard() {
-    const cotacoesPendentes = cotacoes.filter(c => c.status === 'Pendente').sort((a, b) => new Date(b.dataGeracao) - new Date(a.dataGeracao)); // Ordena por data
+    const cotacoesPendentes = cotacoes.filter(c => c.status === 'Pendente').sort((a, b) => new Date(b.dataGeracao) - new Date(a.dataGeracao));
     const listaContainer = document.getElementById('dash-lista-cotacoes');
     listaContainer.innerHTML = '';
 
@@ -136,14 +145,13 @@ function renderizarCotacoesPendentesDashboard() {
         listaContainer.innerHTML = '<p class="text-gray-400 text-center p-4">🎉 Nenhuma cotação pendente!</p>';
         return;
     }
-    cotacoesPendentes.slice(0, 5).forEach(cotacao => { // Mostra as 5 mais recentes
-        listaContainer.innerHTML += `<div class="bg-gray-800 rounded-lg p-4 flex justify-between items-center"><div><h4 class="text-white font-bold">${cotacao.id}</h4><p class="text-gray-300 text-sm">${cotacao.cliente} - ${cotacao.local}</p><p class="text-gray-400 text-xs">${formatarData(new Date(cotacao.dataGeracao))}</p></div><div class="text-right"><p class="text-white font-bold text-lg">${cotacao.totalGeral}</p><button onclick="alterarStatusCotacao('${cotacao.id}', 'Convertida')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm mt-1">✅ Converter</button></div></div>`;
+    cotacoesPendentes.slice(0, 5).forEach(cotacao => {
+        listaContainer.innerHTML += `<div class="bg-gray-800 rounded-lg p-4 flex justify-between items-center"><div><h4 class="text-white font-bold">${cotacao.id}</h4><p class="text-gray-300 text-sm">${cotacao.cliente || 'N/I'} - ${cotacao.local || 'N/I'}</p><p class="text-gray-400 text-xs">${formatarData(new Date(cotacao.dataGeracao))}</p></div><div class="text-right"><p class="text-white font-bold text-lg">${cotacao.totalGeral}</p><button onclick="alterarStatusCotacao('${cotacao.id}', 'Convertida')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm mt-1">✅ Converter</button></div></div>`;
     });
 }
 
-
 // --- Fornecedores ---
-// ... (código dos Fornecedores - carregarFornecedoresSelect, etc - permanece o mesmo) ...
+// ... (código dos Fornecedores permanece o mesmo) ...
 function carregarFornecedoresSelect(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -187,30 +195,97 @@ function removerFornecedor() {
 
 
 // --- Produtos ---
-// ... (código dos Produtos - handleSalvarProduto, editarProduto, etc - permanece o mesmo) ...
+
+// NOVO: Funções para Variações (UI básica)
+function adicionarVariacao() {
+    const typeInput = document.getElementById('variation-type');
+    const valueInput = document.getElementById('variation-value');
+    const skuInput = document.getElementById('variation-sku');
+    const type = typeInput.value.trim();
+    const value = valueInput.value.trim();
+    const sku = skuInput.value.trim();
+
+    if (!value || !sku) {
+        mostrarNotificacao('Preencha o Valor e o SKU da Variação!', 'error');
+        return;
+    }
+    // Adiciona à lista temporária (a ser salva junto com o produto)
+    produtoVariationsTemporario.push({ type: type || 'Única', value, sku }); // Usa 'Única' se tipo não for preenchido
+    renderizarVariacoes();
+
+    // Limpa os campos de input de variação
+    typeInput.value = '';
+    valueInput.value = '';
+    skuInput.value = '';
+}
+
+function renderizarVariacoes() {
+    const listElement = document.getElementById('variations-list');
+    listElement.innerHTML = ''; // Limpa a lista atual
+    if (produtoVariationsTemporario.length === 0) {
+        listElement.innerHTML = '<p class="text-gray-400 text-xs text-center variation-placeholder">Nenhuma variação adicionada.</p>';
+        return;
+    }
+    produtoVariationsTemporario.forEach((variation, index) => {
+        const item = document.createElement('div');
+        item.className = 'variation-item';
+        item.innerHTML = `
+            <span>${variation.type}</span>
+            <span>${variation.value}</span>
+            <span>${variation.sku}</span>
+            <button type="button" class="remove-variation-btn" onclick="removerVariacao(${index})">✕</button>
+        `;
+        listElement.appendChild(item);
+    });
+}
+
+function removerVariacao(index) {
+    produtoVariationsTemporario.splice(index, 1); // Remove do array pelo índice
+    renderizarVariacoes(); // Re-renderiza a lista
+}
+
 function handleSalvarProduto(e) {
     e.preventDefault();
     const fileInput = document.getElementById('produto-imagem');
     const file = fileInput.files[0];
 
+    // Pega dados básicos do formulário
     const produtoData = {
-        sku: document.getElementById('produto-sku').value.trim(),
+        sku: document.getElementById('produto-sku').value.trim(), // SKU Principal
         nome: document.getElementById('produto-nome').value.trim(),
         categoria: document.getElementById('produto-categoria').value.trim(),
         fornecedor: document.getElementById('produto-fornecedor').value,
-        custo: parseFloat(document.getElementById('produto-custo').value) || 0,
+        custo: parseFloat(document.getElementById('produto-custo').value) || 0, // Custo Base
         picking: parseFloat(document.getElementById('produto-picking').value) || 0,
-        precoVenda: parseFloat(document.getElementById('produto-preco-venda').value) || 0,
-        peso: parseFloat(document.getElementById('produto-peso').value) || 0,
+        peso: parseFloat(document.getElementById('produto-peso').value) || 0, // Peso Base
         comprimento: parseInt(document.getElementById('produto-comprimento').value) || 0,
         largura: parseInt(document.getElementById('produto-largura').value) || 0,
         altura: parseInt(document.getElementById('produto-altura').value) || 0,
+        // Adiciona as variações salvas temporariamente
+        variations: [...produtoVariationsTemporario]
+        // pricingConfig será mantido se já existir (na parte de edição)
     };
 
+    // Validação
     if (!produtoData.sku || !produtoData.nome || !produtoData.categoria || !produtoData.fornecedor || produtoData.custo < 0 || produtoData.peso <= 0) {
         mostrarNotificacao('Preencha os campos obrigatórios (*) com valores válidos!', 'error');
         return;
     }
+    // Validação de SKU único (considerando principal e variações)
+    const allSkusInForm = [produtoData.sku, ...produtoData.variations.map(v => v.sku)].filter(Boolean); // Filtra SKUs vazios
+    if (new Set(allSkusInForm).size !== allSkusInForm.length) {
+         mostrarNotificacao('Erro: SKUs duplicados dentro do mesmo produto (principal ou variações).', 'error');
+         return;
+    }
+    // Verifica duplicação com outros produtos (exceto o próprio produto sendo editado)
+    const outrosProdutos = produtos.filter(p => p.id !== produtoEditId);
+    const skusExistentes = outrosProdutos.flatMap(p => [p.sku, ...(p.variations || []).map(v => v.sku)]);
+    const skuDuplicado = allSkusInForm.find(sku => skusExistentes.includes(sku));
+    if (skuDuplicado) {
+        mostrarNotificacao(`Erro: O SKU "${skuDuplicado}" já está em uso por outro produto ou variação.`, 'error');
+        return;
+    }
+
 
     const salvar = (imageUrl) => {
         produtoData.imagem = imageUrl;
@@ -220,17 +295,30 @@ function handleSalvarProduto(e) {
                 if (!imageUrl && produtos[index].imagem) {
                     produtoData.imagem = produtos[index].imagem;
                 }
-                produtos[index] = { ...produtos[index], ...produtoData, dataAtualizacao: new Date().toISOString() };
+                // Mantém datas originais e config de precificação, atualiza data de modificação
+                produtos[index] = {
+                    ...produtos[index], // Mantém ID, dataCadastro, pricingConfig
+                    ...produtoData, // Sobrescreve com novos dados do formulário
+                    dataAtualizacao: new Date().toISOString()
+                };
                 mostrarNotificacao('Produto atualizado com sucesso!', 'success');
             }
         } else {
             produtoData.id = Date.now();
             produtoData.dataCadastro = new Date().toISOString();
+            produtoData.pricingConfig = {}; // Inicializa config de precificação para novos produtos
             produtos.push(produtoData);
             mostrarNotificacao('Produto salvo com sucesso!', 'success');
         }
         salvarDados('produtos', produtos);
-        limparFormularioProduto();
+        limparFormularioProduto(); // Limpa DEPOIS de salvar
+        
+        // Limpa os filtros do catálogo antes de ir para a página
+        // Isso garante que o produto novo/editado apareça
+        document.getElementById('filtro-busca').value = '';
+        document.getElementById('filtro-categoria').value = '';
+        document.getElementById('filtro-fornecedor').value = '';
+
         showPage('catalogo');
     };
 
@@ -239,14 +327,23 @@ function handleSalvarProduto(e) {
         reader.onload = (e) => salvar(e.target.result);
         reader.readAsDataURL(file);
     } else {
-        salvar(produtoEditId ? (produtos.find(p=>p.id===produtoEditId)?.imagem || null) : null);
+        salvar(produtoEditId ? (produtos.find(p => p.id === produtoEditId)?.imagem || null) : null);
     }
 }
+
 function editarProduto(id) {
     const produto = produtos.find(p => p.id === id);
     if (!produto) return;
-    produtoEditId = id;
 
+    // 1. Navega para a página. Se o usuário veio de outro link, o formulário será limpo (pela Correção 1.3)
+    // Se ele já estava na página, ela apenas continua visível.
+    showPage('produtos'); 
+
+    // 2. Limpa o formulário ANTES de preencher
+    limparFormularioProduto(); 
+    
+    // 3. Agora que a página está visível e limpa, preenchemos os dados
+    produtoEditId = id;
     document.getElementById('produto-id-edit').value = id;
     document.getElementById('produto-sku').value = produto.sku;
     document.getElementById('produto-nome').value = produto.nome;
@@ -254,11 +351,14 @@ function editarProduto(id) {
     document.getElementById('produto-fornecedor').value = produto.fornecedor;
     document.getElementById('produto-custo').value = produto.custo.toFixed(2);
     document.getElementById('produto-picking').value = produto.picking.toFixed(2);
-    document.getElementById('produto-preco-venda').value = produto.precoVenda.toFixed(2);
     document.getElementById('produto-peso').value = produto.peso.toFixed(2);
     document.getElementById('produto-comprimento').value = produto.comprimento;
     document.getElementById('produto-largura').value = produto.largura;
     document.getElementById('produto-altura').value = produto.altura;
+
+    // Carrega as variações existentes
+    produtoVariationsTemporario = [...(produto.variations || [])];
+    renderizarVariacoes();
 
     const imgPreview = document.getElementById('produto-imagem-preview');
     if (produto.imagem) {
@@ -270,8 +370,9 @@ function editarProduto(id) {
     document.getElementById('produto-imagem').value = '';
 
     document.getElementById('produto-form-titulo').innerHTML = `<span class="mr-2">✏️</span> Editando Produto`;
-    showPage('produtos');
 }
+
+
 function limparFormularioProduto() {
     produtoEditId = null;
     document.getElementById('produto-form').reset();
@@ -279,11 +380,15 @@ function limparFormularioProduto() {
 
     Object.assign(document.getElementById('produto-custo'), {value: '0.00'});
     Object.assign(document.getElementById('produto-picking'), {value: '2.00'});
-    Object.assign(document.getElementById('produto-preco-venda'), {value: '0.00'});
+    // Object.assign(document.getElementById('produto-preco-venda'), {value: '0.00'}); // REMOVIDO
     Object.assign(document.getElementById('produto-peso'), {value: '0.00'});
     Object.assign(document.getElementById('produto-comprimento'), {value: '0'});
     Object.assign(document.getElementById('produto-largura'), {value: '0'});
     Object.assign(document.getElementById('produto-altura'), {value: '0'});
+
+    // Limpa variações
+    produtoVariationsTemporario = [];
+    renderizarVariacoes();
 
     const imgPreview = document.getElementById('produto-imagem-preview');
     imgPreview.classList.add('hidden');
@@ -291,6 +396,7 @@ function limparFormularioProduto() {
     document.getElementById('produto-form-titulo').innerHTML = `<span class="mr-2">📦</span> Cadastrar Novo Produto`;
     document.querySelectorAll('#produto-form .border-red-500').forEach(el => el.classList.remove('border-red-500'));
 }
+// previewImagemProduto e excluirProduto/confirmarExclusaoProduto permanecem iguais
 function previewImagemProduto(event) {
     const reader = new FileReader();
     const imgPreview = document.getElementById('produto-imagem-preview');
@@ -306,7 +412,7 @@ function previewImagemProduto(event) {
     }
 }
 function excluirProduto(id) {
-    abrirModalConfirmacao(`Tem certeza que deseja excluir este produto? Kits que o utilizam também podem ser afetados.`, () => confirmarExclusaoProduto(id));
+    abrirModalConfirmacao(`Tem certeza que deseja excluir este produto e todas as suas variações? Kits que o utilizam também podem ser afetados.`, () => confirmarExclusaoProduto(id));
 }
 function confirmarExclusaoProduto(id) {
     produtos = produtos.filter(p => p.id !== id);
@@ -315,7 +421,8 @@ function confirmarExclusaoProduto(id) {
     let kitsAfetados = false;
     kits.forEach(kit => {
         const tamanhoOriginal = kit.produtos.length;
-        kit.produtos = kit.produtos.filter(p => p.id !== id);
+        // Remove o produto base ou qualquer uma de suas variações (precisa checar pelo id base)
+        kit.produtos = kit.produtos.filter(p => p.id !== id); // Assumindo que produtos em kits guardam o ID original
         if(kit.produtos.length < tamanhoOriginal) {
             kitsAfetados = true;
             kit.custoTotal = kit.produtos.reduce((a, p) => a + p.custo + p.picking, 0);
@@ -323,7 +430,6 @@ function confirmarExclusaoProduto(id) {
     });
     if(kitsAfetados) salvarDados('kits', kits);
 
-    // Re-renderiza páginas visíveis
     if(document.getElementById('catalogo-page')?.offsetParent !== null) aplicarFiltros();
     // REMOVIDO: if(document.getElementById('lojas-page')?.offsetParent !== null) renderizarProdutosLojas();
     if(document.getElementById('kits-page')?.offsetParent !== null) renderizarListaKits();
@@ -332,11 +438,16 @@ function confirmarExclusaoProduto(id) {
     fecharModal();
 }
 
+
 // --- Catálogo ---
 function carregarFiltrosCatalogo() {
     carregarFornecedoresSelect('filtro-fornecedor');
+    // Considerar adicionar categorias de Kits se necessário
+    const categoriasProdutos = [...new Set(produtos.map(p => p.categoria))];
+    const categoriasKits = [...new Set(kits.map(k => k.categoria || "Kit"))]; // Define "Kit" como categoria padrão
+    const categorias = [...new Set([...categoriasProdutos, ...categoriasKits])].sort();
+
     const filtroCategoria = document.getElementById('filtro-categoria');
-    const categorias = [...new Set(produtos.map(p => p.categoria))].sort();
     const valorAtual = filtroCategoria.value;
     filtroCategoria.innerHTML = '<option value="">Todas categorias</option>';
     categorias.forEach(c => {
@@ -347,17 +458,31 @@ function carregarFiltrosCatalogo() {
     });
     filtroCategoria.value = valorAtual;
 }
+
+// ATUALIZADO: aplicarFiltros busca em Produtos e Kits
 function aplicarFiltros() {
     const busca = document.getElementById('filtro-busca').value.toLowerCase();
     const categoria = document.getElementById('filtro-categoria').value;
-    const fornecedor = document.getElementById('filtro-fornecedor').value;
+    const fornecedor = document.getElementById('filtro-fornecedor').value; // Filtro de fornecedor se aplica mais a produtos
+
+    // Filtra Produtos
     const produtosFiltrados = produtos.filter(p =>
-        (!busca || p.nome.toLowerCase().includes(busca) || p.sku.toLowerCase().includes(busca)) &&
+        (!busca || p.nome.toLowerCase().includes(busca) || p.sku.toLowerCase().includes(busca) || (p.variations && p.variations.some(v => v.sku.toLowerCase().includes(busca)))) && // Busca no SKU principal e variações
         (!categoria || p.categoria === categoria) &&
         (!fornecedor || p.fornecedor === fornecedor)
     );
-    renderizarCatalogo(produtosFiltrados);
+
+    // Filtra Kits (ignora fornecedor por enquanto)
+    const kitsFiltrados = kits.filter(k =>
+        (!busca || k.nome.toLowerCase().includes(busca) || `kit-${k.id}`.toLowerCase().includes(busca)) &&
+        (!categoria || (k.categoria || "Kit") === categoria) // Usa "Kit" se não houver categoria definida
+    );
+
+    // Combina e renderiza
+    const itensFiltrados = [...produtosFiltrados, ...kitsFiltrados];
+    renderizarCatalogo(itensFiltrados);
 }
+
 function limparFiltros() {
     document.getElementById('filtro-busca').value = '';
     document.getElementById('filtro-categoria').value = '';
@@ -365,34 +490,51 @@ function limparFiltros() {
     aplicarFiltros();
 }
 
-// ATUALIZADO: renderizarCatalogo inclui o botão de precificação
-function renderizarCatalogo(produtosParaMostrar) {
+// ATUALIZADO: renderizarCatalogo exibe Produtos e Kits com novo formato
+function renderizarCatalogo(itensParaMostrar) {
     const catalogoLista = document.getElementById('catalogo-lista');
-    catalogoLista.innerHTML = '';
-    if (produtosParaMostrar.length === 0) {
-        catalogoLista.innerHTML = '<p class="text-gray-400 col-span-full text-center py-10">Nenhum produto encontrado.</p>';
+    catalogoLista.innerHTML = ''; // Limpa a lista
+    
+    if (itensParaMostrar.length === 0) {
+        catalogoLista.innerHTML = '<p class="text-gray-400 text-center col-span-full">Nenhum produto ou kit encontrado com esses filtros.</p>';
         return;
     }
-    produtosParaMostrar.forEach(produto => {
-        const custoTotal = produto.custo + produto.picking;
+
+    itensParaMostrar.sort((a, b) => a.nome.localeCompare(b.nome)); // Ordena alfabeticamente
+
+    itensParaMostrar.forEach(item => {
+        const isKit = !!item.produtos; // Verifica se é um kit (se tem a propriedade 'produtos')
+        const id = item.id;
+        const nome = item.nome;
+        const imagem = item.imagem || 'https://via.placeholder.com/300';
+        const sku = isKit ? `KIT-${item.id}` : item.sku;
+        const categoria = item.categoria || (isKit ? 'Kit' : 'N/A');
+        const fornecedor = isKit ? 'Múltiplos' : (item.fornecedor || 'N/A');
+        const custoTotal = isKit ? item.custoTotal : (item.custo + item.picking);
+
         catalogoLista.innerHTML += `
             <div class="custom-card rounded-lg overflow-hidden flex flex-col">
-                <img src="${produto.imagem || 'https://via.placeholder.com/300'}" alt="${produto.nome}" class="w-full h-48 object-cover" onerror="this.src='https://via.placeholder.com/300';">
+                <img src="${imagem}" alt="${nome}" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/300';">
                 <div class="p-4 flex flex-col flex-grow">
-                    <h4 class="font-bold text-white text-base mb-1 truncate">${produto.nome}</h4>
-                    <p class="text-gray-400 text-xs mb-0.5">SKU: ${produto.sku}</p>
-                    <p class="text-gray-400 text-xs mb-0.5">Cat: ${produto.categoria}</p>
-                    <p class="text-gray-400 text-xs mb-2">For: ${produto.fornecedor}</p>
-                    <div class="flex justify-between text-sm mb-3 mt-auto pt-2">
-                        <span class="text-gray-300 text-xs">Custo: ${formatarMoeda(custoTotal)}</span>
-                        <span class="text-white font-bold text-base">${formatarMoeda(produto.precoVenda)}</span>
+                    <h4 class="font-bold text-white text-base mb-2 truncate">${isKit ? '🧩 ' : ''}${nome}</h4>
+                    <div class="product-details mb-auto"> <p><span>SKU:</span> <strong>${sku}</strong></p>
+                        <p><span>Categoria:</span> <strong>${categoria}</strong></p>
+                        <p><span>Fornecedor:</span> <strong>${fornecedor}</strong></p>
+                        <p><span>Custo Total:</span> <strong class="text-red-400">${formatarMoeda(custoTotal)}</strong></p>
+                         ${isKit ? `<p><span>Itens no Kit:</span> <strong>${item.produtos.length}</strong></p>` : ''} 
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="adicionarAoCarrinho(${produto.id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-medium">🛒</button>
-                        <button onclick="editarProduto(${produto.id})" class="flex-1 custom-accent custom-accent-hover text-white px-2 py-1 rounded text-xs font-medium">✏️</button>
-                        <button onclick="excluirProduto(${produto.id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium">🗑️</button>
-                        {/* NOVO BOTÃO DE PRECIFICAR */}
-                        <button onclick="abrirModalPrecificacao(${produto.id})" class="precificacao-btn">💰</button>
+                     <div class="product-actions mt-3"> 
+                        ${isKit ?
+                            `<button onclick="adicionarKitAoCarrinho(${id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white">🛒</button>
+                             <button onclick="editarKit(${id})" class="flex-1 custom-accent custom-accent-hover text-white">✏️</button>
+                             <button onclick="excluirKit(${id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white">🗑️</button>
+                             <button disabled class="precificacao-btn opacity-50 cursor-not-allowed">💰</button>` // Botão desabilitado para Kits por enquanto
+                            :
+                            `<button onclick="adicionarAoCarrinho(${id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white">🛒</button>
+                             <button onclick="editarProduto(${id})" class="flex-1 custom-accent custom-accent-hover text-white">✏️</button>
+                             <button onclick="excluirProduto(${id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white">🗑️</button>
+                             <button onclick="abrirModalPrecificacao(${id})" class="precificacao-btn">💰</button>`
+                        }
                     </div>
                 </div>
             </div>`;
@@ -401,7 +543,7 @@ function renderizarCatalogo(produtosParaMostrar) {
 
 
 // --- Carrinho ---
-// ... (código do Carrinho - abrirCarrinho, fecharCarrinho, etc - permanece o mesmo) ...
+// ... (código do Carrinho permanece o mesmo) ...
 function abrirCarrinho() {
     document.getElementById('carrinho-painel').classList.add('show');
     document.getElementById('carrinho-overlay').classList.add('show');
@@ -421,13 +563,16 @@ function renderizarCarrinho() {
     } else {
         carrinho.forEach(item => {
             const subtotal = item.precoVenda * item.quantidade;
+            // Adapta para pegar custo do produto ou kit
+            const custoUnitario = item.isKit ? item.custo : (item.custo + item.picking);
             listaItens.innerHTML += `
                 <div class="flex items-center gap-3 p-3 custom-card rounded-lg mb-3">
-                    <img src="${item.imagem || 'https://via.placeholder.com/64'}" alt="${item.nome}" class="w-12 h-12 object-cover rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/64';">
+                    <img src="${item.imagem || (item.isKit ? 'https://via.placeholder.com/64/16213E/FFFFFF?text=KIT' : 'https://via.placeholder.com/64')}" alt="${item.nome}" class="w-12 h-12 object-cover rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/64';">
                     <div class="flex-1 min-w-0">
                         <p class="text-white font-semibold truncate text-sm">${item.nome}</p>
                         <p class="text-gray-400 text-xs">SKU: ${item.sku}</p>
-                        <p class="text-gray-300 text-xs">Unit: ${formatarMoeda(item.precoVenda)}</p>
+                        <p class="text-gray-300 text-xs">Unit: ${formatarMoeda(item.precoVenda)}</p> /* Preço de venda do item/kit */
+                        <p class="text-red-400 text-xs">Custo: ${formatarMoeda(custoUnitario)}</p> /* Custo do item/kit */
                     </div>
                     <div class="flex flex-col items-end">
                         <div class="flex items-center gap-1 mb-1">
@@ -471,6 +616,9 @@ function limparCarrinho() {
 function calcularTotais() {
     const d = parseFloat(document.getElementById('carrinho-descontos').value) || 0;
     const f = parseFloat(document.getElementById('carrinho-frete').value) || 0;
+    // O preço de venda usado no cálculo do subtotal deve ser definido (talvez venda direta padrão?)
+    // Temporariamente, vamos usar o 'precoVenda' armazenado, que pode não ser o ideal para cotação.
+    // O ideal seria pegar o preço calculado para WhatsApp/Direct no modal de precificação.
     const s = carrinho.reduce((a, i) => a + (i.precoVenda * i.quantidade), 0);
     const t = s - d + f;
     document.getElementById('total-subtotal').textContent = formatarMoeda(s);
@@ -478,14 +626,26 @@ function calcularTotais() {
     document.getElementById('total-frete').textContent = formatarMoeda(f);
     document.getElementById('total-geral').textContent = formatarMoeda(t);
 }
+
 function adicionarAoCarrinho(id) {
     const p = produtos.find(x => x.id === id);
     if (!p) return;
+
+    // Busca o preço de "WhatsApp" (venda direta) que foi salvo no modal de precificação
+    const precoSalvo = p.pricingConfig && p.pricingConfig.whatsapp 
+        ? parseFloat(document.getElementById(`preco-final-whatsapp-${id}`)?.value) // Tenta pegar o valor calculado se o modal estiver aberto (não é o caso aqui)
+        : null;
+
+    // Se não achou config de whatsapp, usa um fallback
+    const precoVendaCarrinho = (p.pricingConfig && p.pricingConfig.whatsapp)
+        ? calcularPrecoFinal(p.custo + p.picking, p.pricingConfig.whatsapp, lojasConfig.whatsapp)
+        : (p.precoVenda || (p.custo + p.picking + 10)); // Fallback: Custo + Picking + R$10
+
     const i = carrinho.find(item => item.id === id && !item.isKit);
     if (i) {
         i.quantidade++;
     } else {
-        carrinho.push({ ...p, quantidade: 1, isKit: false });
+        carrinho.push({ ...p, quantidade: 1, isKit: false, precoVenda: precoVendaCarrinho }); // Usa o preço definido
     }
     salvarDados('carrinho', carrinho);
     mostrarNotificacao(`${p.nome} adicionado ao carrinho!`, 'success');
@@ -493,8 +653,16 @@ function adicionarAoCarrinho(id) {
     abrirCarrinho();
 }
 
+// Função auxiliar para calcular o preço final com base no lucro (usada pelo adicionarAoCarrinho)
+function calcularPrecoFinal(custoTotalItem, lucroDesejado, cfg) {
+    const subtotalParaCalculo = custoTotalItem + lucroDesejado + cfg.taxaFixa;
+    const precoFinalCalculado = (cfg.comissao < 1) ? subtotalParaCalculo / (1 - cfg.comissao) : subtotalParaCalculo;
+    return precoFinalCalculado;
+}
+
+
 // --- Cotações ---
-// ... (código das Cotações - gerarResumoWhatsapp, etc - permanece o mesmo) ...
+// ... (código das Cotações permanece o mesmo) ...
 function gerarResumoWhatsapp() {
     if (carrinho.length === 0) { mostrarNotificacao('Carrinho vazio!', 'error'); return; }
     const n = document.getElementById('cliente-nome').value.trim() || "Cliente";
@@ -518,7 +686,21 @@ function gerarResumoWhatsapp() {
     txt += `\n*Totais:*\n • Produtos: ${sT}\n • Descontos: ${dT.replace('-','')}\n • Frete: ${fT}\n* • TOTAL: ${tT}*\n\n_Obs: Sujeito à disponibilidade._`;
     document.getElementById('resumo-whatsapp').value = txt;
     document.getElementById('resumo-container').classList.remove('hidden');
-    cotacaoAtual = { id: idF, idNumero: nextId, dataGeracao: dA.toISOString(), dataValidade: dV.toISOString(), cliente: n, whatsapp: w, local: l, itens: [...carrinho], subtotal: sT, descontos: dT, frete: fT, totalGeral: tT, status: 'Pendente' };
+    // Armazena a cotação com os dados e itens atuais do carrinho
+    cotacaoAtual = {
+        id: idF, idNumero: nextId, dataGeracao: dA.toISOString(), dataValidade: dV.toISOString(),
+        cliente: n, whatsapp: w, local: l,
+        itens: carrinho.map(item => ({ // Salva informações essenciais dos itens
+            id: item.id,
+            sku: item.sku,
+            nome: item.nome,
+            quantidade: item.quantidade,
+            precoVenda: item.precoVenda, // Preço usado na cotação
+            custo: item.isKit ? item.custo : (item.custo + item.picking), // Custo total do item
+            isKit: item.isKit
+        })),
+        subtotal: sT, descontos: dT, frete: fT, totalGeral: tT, status: 'Pendente'
+    };
     mostrarNotificacao('Resumo para WhatsApp gerado!', 'success');
 }
 function copiarResumo() {
@@ -619,29 +801,29 @@ function verDetalhesCotacao(id) {
     const dG = formatarData(new Date(c.dataGeracao));
     const dV = formatarData(new Date(c.dataValidade)).split(',')[0];
     let txt = `ORÇAMENTO #${c.id} – ${dG} (Válido até ${dV})\n\n`;
-    txt += `Cliente: ${c.cliente} – WhatsApp: ${c.whatsapp}\nLocal: ${c.local}\n\nItens:\n`;
-    c.itens.forEach(i => { txt += ` • ${i.nome} (${i.sku}) - ${i.quantidade}x ${formatarMoeda(i.precoVenda)} = ${formatarMoeda(i.precoVenda * i.quantidade)}\n`; });
+    txt += `Cliente: ${c.cliente || 'N/I'} – WhatsApp: ${c.whatsapp || 'N/I'}\nLocal: ${c.local || 'N/I'}\n\nItens:\n`;
+    (c.itens || []).forEach(i => { // Adiciona verificação para c.itens
+        txt += ` • ${i.nome} (${i.sku}) - ${i.quantidade}x ${formatarMoeda(i.precoVenda)} = ${formatarMoeda(i.precoVenda * i.quantidade)}\n`;
+    });
     txt += `\nTotais:\n • Produtos: ${c.subtotal}\n • Descontos: ${c.descontos.replace('-','')}\n • Frete: ${c.frete}\n • TOTAL: ${c.totalGeral}\n\nStatus: ${c.status}`;
     abrirModalDetalhes("Detalhes Cotação " + c.id, txt);
 }
 
 
-// --- Lojas --- (REMOVIDO - Lógica agora está no Modal de Precificação)
-// As funções renderizarProdutosLojas, recalcularCardProduto, etc., foram removidas.
-
-
 // --- Kits ---
-// ... (código dos Kits - inicializarPaginaKits, etc - permanece o mesmo) ...
+// ... (código dos Kits atualizado para remover Venda Direta e melhorar busca) ...
 function inicializarPaginaKits() {
     carregarProdutosParaKitSelect();
     renderizarListaKits();
     document.getElementById('filtro-kits').addEventListener('input', renderizarListaKits);
 }
+// ATUALIZADO: Busca por Nome ou SKU
 function carregarProdutosParaKitSelect(filtro = '') {
     const sel = document.getElementById('kit-produtos-select');
     const vAt = sel.value;
     sel.innerHTML = '<option value="">Selecione...</option>';
-    const pF = produtos.filter(p => p.nome.toLowerCase().includes(filtro) || p.sku.toLowerCase().includes(filtro));
+    const filtroLower = filtro.toLowerCase();
+    const pF = produtos.filter(p => p.nome.toLowerCase().includes(filtroLower) || p.sku.toLowerCase().includes(filtroLower));
     pF.forEach(p => {
         const o = document.createElement('option');
         o.value = p.id;
@@ -651,9 +833,10 @@ function carregarProdutosParaKitSelect(filtro = '') {
     sel.value = vAt;
 }
 function filtrarProdutosParaKit() {
-    const f = document.getElementById('filtro-produtos-kit').value.toLowerCase();
+    const f = document.getElementById('filtro-produtos-kit').value; // Não precisa toLowerCase aqui, carregarProdutos faz
     carregarProdutosParaKitSelect(f);
 }
+// Adicionar e Remover Produto do Kit (permanecem iguais)
 function adicionarProdutoAoKit() {
     const sel = document.getElementById('kit-produtos-select');
     const pId = parseInt(sel.value);
@@ -687,19 +870,21 @@ function removerProdutoDoKit(pId) {
     renderizarProdutosDoKit();
     mostrarNotificacao('Produto removido do kit!', 'success');
 }
+// ATUALIZADO: handleSalvarKit não usa mais precoVenda
 function handleSalvarKit(e) {
     e.preventDefault();
     const kId = document.getElementById('kit-id').value;
     const nK = document.getElementById('kit-nome').value.trim();
-    const pVK = parseFloat(document.getElementById('kit-preco-venda').value);
+    // REMOVIDO: const pVK = parseFloat(document.getElementById('kit-preco-venda').value);
 
-    if (!nK || !pVK || pVK <= 0 || kitProdutosTemporario.length === 0) {
-        mostrarNotificacao('Preencha o nome, preço de venda (>0) e adicione pelo menos um produto ao kit!', 'error');
+    if (!nK || kitProdutosTemporario.length === 0) {
+        mostrarNotificacao('Preencha o nome e adicione pelo menos um produto ao kit!', 'error');
         return;
     }
 
     const cTK = kitProdutosTemporario.reduce((a, p) => a + p.custo + p.picking, 0);
-    const nKi = { id: kId ? parseInt(kId) : Date.now(), nome: nK, produtos: [...kitProdutosTemporario], precoVenda: pVK, custoTotal: cTK };
+    // REMOVIDO: precoVenda do objeto do Kit
+    const nKi = { id: kId ? parseInt(kId) : Date.now(), nome: nK, produtos: [...kitProdutosTemporario], custoTotal: cTK, categoria: "Kit" }; // Adiciona categoria padrão
 
     if (kId) {
         const i = kits.findIndex(k => k.id === parseInt(kId));
@@ -712,18 +897,21 @@ function handleSalvarKit(e) {
     limparFormularioKit();
     renderizarListaKits();
     mostrarNotificacao(kId ? 'Kit atualizado com sucesso!' : 'Kit salvo com sucesso!', 'success');
-    // REMOVIDO: if (document.getElementById('lojas-page')?.offsetParent !== null) renderizarProdutosLojas();
+    // Atualiza catálogo se visível
+     if(document.getElementById('catalogo-page')?.offsetParent !== null) aplicarFiltros();
 }
+// ATUALIZADO: limparFormularioKit não reseta precoVenda
 function limparFormularioKit() {
     document.getElementById('kit-form').reset();
     document.getElementById('kit-id').value = '';
-    document.getElementById('kit-preco-venda').value = '0.00';
+    // REMOVIDO: document.getElementById('kit-preco-venda').value = '0.00';
     document.getElementById('kit-form-titulo').innerHTML = '🧩 Novo Kit';
     kitProdutosTemporario = [];
     renderizarProdutosDoKit();
     document.getElementById('filtro-produtos-kit').value = '';
     carregarProdutosParaKitSelect();
 }
+// ATUALIZADO: renderizarListaKits não mostra precoVenda ou lucro direto
 function renderizarListaKits() {
     const f = document.getElementById('filtro-kits').value.toLowerCase();
     const cont = document.getElementById('kits-lista-container');
@@ -734,64 +922,78 @@ function renderizarListaKits() {
         return;
     }
     kF.forEach(k => {
-        const lK = k.precoVenda - k.custoTotal;
-        const mK = (k.precoVenda > 0) ? ((lK / k.precoVenda) * 100) : 0;
         cont.innerHTML += `
             <div class="custom-card rounded-lg p-3">
                 <div class="flex justify-between items-start mb-1.5">
                     <div class="flex-1 mr-3">
-                        <h4 class="text-sm font-bold text-white mb-0.5 truncate">${k.nome}</h4>
+                        <h4 class="text-sm font-bold text-white mb-0.5 truncate">🧩 ${k.nome}</h4>
                         <p class="text-gray-400 text-xs">${k.produtos.length} produto(s)</p>
                     </div>
-                    <div class="text-right flex-shrink-0">
-                        <p class="text-base font-bold text-green-400">${formatarMoeda(k.precoVenda)}</p>
-                        <p class="text-xs ${lK >= 0 ? 'text-green-400' : 'text-red-400'}">Lucro Dir: ${formatarMoeda(lK)} (${mK.toFixed(1)}%)</p>
-                    </div>
+                    /* Removido Preço e Lucro Direto */
                 </div>
                 <div class="mb-2 p-1.5 bg-gray-800 rounded text-xs">
-                     <p>Custo Total: ${formatarMoeda(k.custoTotal)}</p>
+                     <p>Custo Total do Kit: ${formatarMoeda(k.custoTotal)}</p>
                 </div>
                 <div class="flex gap-1.5">
                     <button onclick="mostrarDetalhesKit(${k.id})" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">👁️</button>
+                    /* Adicionar Kit ao Carrinho pode precisar de um preço padrão ou abrir modal */
                     <button onclick="adicionarKitAoCarrinho(${k.id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">🛒</button>
                     <button onclick="editarKit(${k.id})" class="flex-1 custom-accent custom-accent-hover text-white px-2 py-1 rounded text-xs">✏️</button>
                     <button onclick="excluirKit(${k.id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">🗑️</button>
+                     /* Botão de precificar Kit (desabilitado por enquanto) */
+                     /* <button disabled class="flex-1 bg-gray-500 text-gray-300 px-2 py-1 rounded text-xs cursor-not-allowed">💰</button> */
                 </div>
             </div>`;
     });
 }
+// ATUALIZADO: mostrarDetalhesKit não mostra Preço Direto
 function mostrarDetalhesKit(id) {
     const k = kits.find(x => x.id === id);
     if (!k) return;
-    let dH = `<p class="mb-2 text-sm"><strong>Custo Total:</strong> ${formatarMoeda(k.custoTotal)}</p><p class="mb-3 text-sm"><strong>Preço Venda Direta:</strong> ${formatarMoeda(k.precoVenda)}</p><strong class="block mb-1 text-sm">Produtos no Kit:</strong><ul class="list-disc list-inside space-y-1 text-xs max-h-48 overflow-y-auto bg-gray-800 p-2 rounded">`;
-    k.produtos.forEach(p => { dH += `<li>${p.nome} (${p.sku}) - Custo Unit: ${formatarMoeda(p.custo+p.picking)}</li>`; });
+    let dH = `<p class="mb-3 text-sm"><strong>Custo Total do Kit:</strong> ${formatarMoeda(k.custoTotal)}</p>
+              <strong class="block mb-1 text-sm">Produtos no Kit:</strong>
+              <ul class="list-disc list-inside space-y-1 text-xs max-h-48 overflow-y-auto bg-gray-800 p-2 rounded">`;
+    k.produtos.forEach(p => { dH += `<li>${p.nome} (${p.sku}) - Custo Unit: ${formatarMoeda(p.custo + p.picking)}</li>`; });
     dH += `</ul>`;
     abrirModalDetalhes(`Detalhes do Kit: ${k.nome}`, dH, true);
 }
+// ATUALIZADO: editarKit não preenche precoVenda
 function editarKit(id) {
     const k = kits.find(x => x.id === id);
     if (!k) return;
+    
+    // 1. Navega para a página
+    showPage('kits');
+    
+    // 2. Preenche os dados
     document.getElementById('kit-id').value = k.id;
     document.getElementById('kit-nome').value = k.nome;
-    document.getElementById('kit-preco-venda').value = k.precoVenda.toFixed(2);
+    // REMOVIDO: document.getElementById('kit-preco-venda').value = k.precoVenda.toFixed(2);
     document.getElementById('kit-form-titulo').innerHTML = '✏️ Editando Kit';
     kitProdutosTemporario = [...k.produtos];
     renderizarProdutosDoKit();
 }
+// confirmarExclusaoKit permanece o mesmo
 function excluirKit(id) {
     abrirModalConfirmacao(`Tem certeza que deseja excluir este kit?`, () => confirmarExclusaoKit(id));
 }
 function confirmarExclusaoKit(id) {
     kits = kits.filter(k => k.id !== id);
     salvarDados('kits', kits);
-    renderizarListaKits();
+    renderizarListaKits(); // Atualiza lista na página Kits
+    if(document.getElementById('catalogo-page')?.offsetParent !== null) aplicarFiltros(); // Atualiza catálogo
     fecharModal();
     mostrarNotificacao('Kit excluído com sucesso!', 'success');
-    // REMOVIDO: if (document.getElementById('lojas-page')?.offsetParent !== null) renderizarProdutosLojas();
 }
+// ATUALIZADO: adicionarKitAoCarrinho usa um preço temporário ou padrão
 function adicionarKitAoCarrinho(id) {
     const k = kits.find(x => x.id === id);
     if (!k) { mostrarNotificacao('Kit não encontrado!', 'error'); return; }
+
+    // Define um preço padrão para o carrinho (ex: Custo + R$20)
+    // O ideal seria ter um campo no kit para "Preço Sugerido" ou buscar do modal
+    const precoVendaCarrinho = k.custoTotal + 20.00;
+
     const i = carrinho.find(item => item.id === id && item.isKit);
     if (i) {
         i.quantidade++;
@@ -799,8 +1001,8 @@ function adicionarKitAoCarrinho(id) {
         carrinho.push({
             id: k.id, sku: `KIT-${k.id}`, nome: `🧩 ${k.nome}`,
             categoria: 'Kit', fornecedor: 'Kit',
-            custo: k.custoTotal, picking: 0,
-            precoVenda: k.precoVenda,
+            custo: k.custoTotal, picking: 0, // Custo já inclui picking
+            precoVenda: precoVendaCarrinho, // Usa o preço definido acima
             peso: k.produtos.reduce((a, p) => a + p.peso, 0),
             comprimento: 0, largura: 0, altura: 0,
             imagem: null,
@@ -815,7 +1017,7 @@ function adicionarKitAoCarrinho(id) {
 
 
 // --- Marketing/Cupons ---
-// ... (código dos Cupons - inicializarPaginaMarketing, etc - permanece o mesmo) ...
+// ... (código dos Cupons permanece o mesmo) ...
 function inicializarPaginaMarketing() {
     renderizarListaCupons();
     atualizarEstatisticasCupons();
@@ -924,6 +1126,7 @@ function editarCupom(id) {
     document.getElementById('cupom-usos').value = c.limitUsos;
     document.getElementById('cupom-ativo').checked = c.ativo;
     document.getElementById('cupom-form-titulo').innerHTML = '✏️ Editando Cupom';
+    showPage('marketing');
 }
 function excluirCupom(id) {
     abrirModalConfirmacao(`Tem certeza que deseja excluir este cupom?`, () => confirmarExclusaoCupom(id));
@@ -948,8 +1151,8 @@ function calcularEstatisticasFinanceiras() {
     const vM = cC.filter(c => new Date(c.dataGeracao) >= iM).reduce((a, c) => a + (parseFloat(c.totalGeral.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0), 0);
     let lT = 0;
     cC.forEach(ct => {
-        ct.itens.forEach(it => {
-            const cI = it.isKit ? it.custo : (it.custo + it.picking);
+        (ct.itens || []).forEach(it => { // Adiciona verificação para ct.itens
+            const cI = it.custo || 0; // Usa o custo salvo na cotação
             lT += (it.precoVenda - cI) * it.quantidade;
         });
         lT += (parseFloat(ct.frete.replace(/[^0-9,-]+/g,"").replace(",",".")) || 0);
@@ -959,10 +1162,15 @@ function calcularEstatisticasFinanceiras() {
     document.getElementById('financeiro-vendas-mes').textContent = formatarMoeda(vM);
     document.getElementById('financeiro-lucro-total').textContent = formatarMoeda(lT);
 }
+// Placeholder Funções Financeiro/Marketing
+function gerarRelatorio(tipo) { mostrarNotificacao(`Função: Gerar Relatório de ${tipo} (Ainda não implementado)`, 'info'); }
+function definirMetas() { mostrarNotificacao(`Função: Definir Metas (Ainda não implementado)`, 'info'); }
+function iniciarFechamentoMensal() { mostrarNotificacao(`Função: Iniciar Fechamento Mensal (Ainda não implementado)`, 'info'); }
+function verCampanhas() { mostrarNotificacao(`Função: Ver Campanhas (Ainda não implementado)`, 'info'); }
 
 
 // --- Auxiliares ---
-// ... (código Auxiliares - formatarMoeda, formatarData, formatarTelefone - permanece o mesmo) ...
+// ... (código Auxiliares permanece o mesmo) ...
 function formatarMoeda(valor) {
     return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -975,11 +1183,11 @@ function formatarTelefone(tel) {
     return tel.replace(/\D/g,'');
 }
 
-// --- Modais --- (Mantém abrirModalConfirmacao e abrirModalDetalhes)
-// ... (código dos Modais antigos - abrirModalConfirmacao, abrirModalDetalhes, fecharModal - permanece o mesmo) ...
+// --- Modais ---
+// ... (código Modais genéricos permanece o mesmo) ...
 function abrirModalConfirmacao(msg, callback) {
-    fecharModal(); // Fecha qualquer modal anterior (confirmação ou detalhes)
-    fecharModalPrecificacao(); // Fecha modal de precificação também
+    fecharModal();
+    fecharModalPrecificacao();
     const m = document.createElement('div');
     m.id = 'modal-confirmacao';
     m.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1060] p-4';
@@ -994,7 +1202,7 @@ function abrirModalConfirmacao(msg, callback) {
         </div>`;
     document.body.appendChild(m);
     document.getElementById('modal-confirmar-btn').onclick = callback;
-    modalAtual = m; // Guarda referência do modal de confirmação/detalhes
+    modalAtual = m;
 }
 function abrirModalDetalhes(titulo, conteudo, html = false) {
     fecharModal();
@@ -1020,7 +1228,7 @@ function abrirModalDetalhes(titulo, conteudo, html = false) {
     document.body.appendChild(m);
     modalAtual = m;
 }
-function fecharModal() { // Fecha modais de confirmação/detalhes
+function fecharModal() {
     if (modalAtual) {
         modalAtual.remove();
         modalAtual = null;
@@ -1028,50 +1236,58 @@ function fecharModal() { // Fecha modais de confirmação/detalhes
 }
 
 
-// --- NOVO: Funções do Modal de Precificação ---
+// --- Funções do Modal de Precificação ---
 
 function abrirModalPrecificacao(produtoId) {
-    fecharModal(); // Fecha outros modais
-    fecharModalPrecificacao(); // Fecha se já houver um aberto
+    fecharModal();
+    fecharModalPrecificacao();
 
     const produto = produtos.find(p => p.id === produtoId);
-    if (!produto) {
-        mostrarNotificacao('Produto não encontrado para precificação.', 'error');
+    const item = produto; // Usaremos 'item' genericamente
+
+    if (!item) {
+        mostrarNotificacao('Item não encontrado para precificação.', 'error');
         return;
     }
+    const isKit = !produto; // Define se é kit (sempre false por enquanto)
+    const custoTotalItem = isKit ? item.custoTotal : (item.custo + item.picking);
+    const idBase = item.id;
 
-    const custoTotalProduto = produto.custo + produto.picking;
-    const idBase = produto.id; // Usaremos apenas o ID do produto para os elementos globais do modal
+    // ===== INÍCIO DA CORREÇÃO 2.1 (Salvar Precificação) =====
+    const savedPricing = item.pricingConfig || {}; // Garante que é um objeto
+    // ===== FIM DA CORREÇÃO 2.1 =====
 
-    // --- Criação do HTML do Modal ---
     const overlay = document.createElement('div');
     overlay.id = 'modal-precificacao-overlay';
-    overlay.className = 'modal-precificacao-overlay'; // Começa invisível
+    overlay.className = 'modal-precificacao-overlay';
 
     let modalHTML = `
         <div class="modal-precificacao" id="modal-precificacao-${idBase}">
             <div class="modal-precificacao-header">
-                <h3 class="modal-precificacao-title" title="Precificação: ${produto.nome}">Precificação: ${produto.nome}</h3>
+                <h3 class="modal-precificacao-title" title="Precificação: ${item.nome}">Precificação: ${isKit ? '🧩 ' : ''}${item.nome}</h3>
                 <button type="button" class="modal-precificacao-close-btn" onclick="fecharModalPrecificacao()">&times;</button>
             </div>
             <div class="modal-precificacao-content">
                 <div class="modal-product-header">
-                    <img src="${produto.imagem || 'https://via.placeholder.com/80'}" alt="${produto.nome}" class="modal-product-image" onerror="this.src='https://via.placeholder.com/80';">
+                    <img src="${isKit ? 'https://via.placeholder.com/80/16213E/FFFFFF?text=KIT' : (item.imagem || 'https://via.placeholder.com/80')}" alt="${item.nome}" class="modal-product-image" onerror="this.src='https://via.placeholder.com/80';">
                     <div class="modal-product-info">
-                        <p><span>SKU:</span> <strong>${produto.sku}</strong></p>
-                        <p><span>Custo Total (Produto+Picking):</span> <strong class="text-red-400">${formatarMoeda(custoTotalProduto)}</strong></p>
-                        <p><span>Venda Direta Sugerida:</span> <strong>${formatarMoeda(produto.precoVenda)}</strong></p>
-                        <p><span>Lucro Venda Direta:</span> <strong class="${(produto.precoVenda - custoTotalProduto) >= 0 ? 'text-green-400' : 'text-red-400'}">${formatarMoeda(produto.precoVenda - custoTotalProduto)}</strong></p>
+                        <p><span>SKU:</span> <strong>${isKit ? `KIT-${item.id}` : item.sku}</strong></p>
+                        <p><span>Custo Total:</span> <strong class="text-red-400">${formatarMoeda(custoTotalItem)}</strong></p>
+                         ${isKit ? `<p><span>Itens no Kit:</span> <strong>${item.produtos.length}</strong></p>` : ''}
                     </div>
                 </div>
 
                 <h4 class="text-center text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wider">Precificação por Marketplace</h4>
     `;
 
-    // Loop para criar um card de loja para cada marketplace
     Object.keys(lojasConfig).forEach(key => {
         const loja = lojasConfig[key];
-        const idLoja = `${key}-${idBase}`; // ID único para elementos desta loja neste modal
+        const idLoja = `${key}-${idBase}`;
+
+        // ===== INÍCIO DA CORREÇÃO 2.2 (Salvar Precificação) =====
+        // Busca o lucro salvo; se não existir, usa 10.00 como padrão
+        const lucroSalvo = (savedPricing[key] !== undefined) ? savedPricing[key].toFixed(2) : "10.00";
+        // ===== FIM DA CORREÇÃO 2.2 =====
 
         modalHTML += `
             <div class="modal-store-card">
@@ -1085,8 +1301,8 @@ function abrirModalPrecificacao(produtoId) {
                 <div class="store-pricing-body">
                     <div class="store-pricing-row">
                         <label for="lucro-desejado-${idLoja}" class="store-pricing-label">Lucro Desejado (R$):</label>
-                        <input type="number" step="0.01" value="10.00" id="lucro-desejado-${idLoja}" class="store-input" oninput="calcularPrecoLojaModal('${key}', ${idBase}, 'lucro_loja')">
-                    </div>
+                        <input type="number" step="0.01" value="${lucroSalvo}" id="lucro-desejado-${idLoja}" class="store-input" oninput="calcularPrecoLojaModal('${key}', ${idBase}, 'lucro_loja', ${isKit})">
+                        </div>
                      <div class="store-pricing-row ideal-price-row">
                         <span class="store-pricing-label">Preço Ideal Sugerido:</span>
                         <span class="store-pricing-value" id="preco-ideal-${idLoja}">R$ 0,00</span>
@@ -1099,36 +1315,38 @@ function abrirModalPrecificacao(produtoId) {
                         <span class="store-pricing-label">↳ Taxa Fixa:</span>
                         <span class="store-pricing-value store-pricing-detail" id="taxa-fixa-valor-${idLoja}">R$ 0,00</span>
                     </div>
+                    
                     <div class="store-pricing-row final-price-row">
                          <label for="preco-final-${idLoja}" class="store-pricing-label">Preço Final (R$):</label>
-                        <input type="number" step="0.01" value="0.00" id="preco-final-${idLoja}" class="store-input" oninput="calcularPrecoLojaModal('${key}', ${idBase}, 'preco_final')">
+                        <input type="number" step="0.01" value="0.00" id="preco-final-${idLoja}" class="store-input bg-gray-600" readonly>
                     </div>
                     <div class="store-pricing-row final-result-row">
                         <span class="store-pricing-label">↳ Lucro Real (Margem):</span>
-                        <span class="store-pricing-value" id="lucro-real-${idLoja}">R$ 0,00 (<span id="margem-real-${idLoja}">0,0%</span>)</span>
+                        <span class="store-pricing-value">
+                            <span id="lucro-real-${idLoja}">R$ 0,00</span> (<span id="margem-real-${idLoja}">0,0%</span>)
+                        </span>
                     </div>
                 </div>
             </div>`;
     });
 
     modalHTML += `
-            </div> {/* Fim modal-precificacao-content */}
-            <div class="modal-precificacao-footer">
-                <button type="button" class="modal-close-button" onclick="fecharModalPrecificacao()">Fechar</button>
             </div>
-        </div> {/* Fim modal-precificacao */}
+            <div class="modal-precificacao-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="modal-close-button" onclick="fecharModalPrecificacao()">Cancelar</button>
+                <button type="button" class="modal-close-button" onclick="salvarPrecificacaoModal(${idBase}, ${isKit})" style="background-color: var(--modal-accent); border-color: var(--modal-accent);" onmouseover="this.style.backgroundColor='#6B46C1'" onmouseout="this.style.backgroundColor='var(--modal-accent)'">💾 Salvar e Fechar</button>
+            </div>
+            </div>
     `;
 
     overlay.innerHTML = modalHTML;
     document.body.appendChild(overlay);
 
-    // Adiciona a classe 'show' após um pequeno delay para a transição funcionar
     setTimeout(() => overlay.classList.add('show'), 10);
     modalPrecificacaoAberto = true;
 
-    // Calcula os preços iniciais para todas as lojas no modal
     Object.keys(lojasConfig).forEach(key => {
-        calcularPrecoLojaModal(key, idBase, 'init'); // Trigger inicial
+        calcularPrecoLojaModal(key, idBase, 'init', isKit); // Passa isKit
     });
 }
 
@@ -1136,88 +1354,138 @@ function fecharModalPrecificacao() {
     const overlay = document.getElementById('modal-precificacao-overlay');
     if (overlay) {
         overlay.classList.remove('show');
-        // Remove o elemento após a transição
         setTimeout(() => {
-             if (overlay) overlay.remove(); // Verifica se ainda existe
+             if (overlay) overlay.remove();
              modalPrecificacaoAberto = false;
-         }, 300); // Tempo igual à transição do CSS
+         }, 300);
     } else {
-        modalPrecificacaoAberto = false; // Garante que a flag esteja correta
+        modalPrecificacaoAberto = false;
     }
 }
 
-// NOVA FUNÇÃO: Calcula o preço para UMA loja DENTRO do modal
-function calcularPrecoLojaModal(lojaKey, produtoId, trigger) {
-    const produto = produtos.find(p => p.id === produtoId);
-    if (!produto) return; // Segurança
+// ===== INÍCIO DA CORREÇÃO 2.5 (Salvar Precificação) =====
+// Nova função para salvar os dados do modal
+function salvarPrecificacaoModal(itemId, isKit) {
+    const item = isKit ? kits.find(k => k.id === itemId) : produtos.find(p => p.id === itemId);
+    if (!item) {
+        mostrarNotificacao('Erro: Item não encontrado para salvar.', 'error');
+        return;
+    }
+
+    if (isKit) {
+        // Salvamento de precificação de kit não é suportado ainda
+        mostrarNotificacao('Salvamento de precificação de kit ainda não implementado.', 'info');
+        fecharModalPrecificacao();
+        return;
+    }
+
+    if (!item.pricingConfig) {
+        item.pricingConfig = {}; // Inicializa o objeto se não existir
+    }
+
+    let alteracoesFeitas = false;
+
+    Object.keys(lojasConfig).forEach(key => {
+        const idLoja = `${key}-${itemId}`;
+        const lucroDesejadoInput = document.getElementById(`lucro-desejado-${idLoja}`);
+        
+        if (lucroDesejadoInput) {
+            const lucroDesejado = parseFloat(lucroDesejadoInput.value);
+            if (!isNaN(lucroDesejado)) {
+                item.pricingConfig[key] = lucroDesejado;
+                alteracoesFeitas = true;
+            }
+        }
+    });
+
+    if (alteracoesFeitas) {
+        // Encontra o índice do produto para salvar a array inteira
+        const produtoIndex = produtos.findIndex(p => p.id === itemId);
+        if (produtoIndex !== -1) {
+            produtos[produtoIndex] = item; // Atualiza o item no array
+            salvarDados('produtos', produtos); // Salva a array 'produtos' inteira
+            mostrarNotificacao('Configurações de precificação salvas!', 'success');
+        } else {
+            mostrarNotificacao('Erro ao encontrar produto para salvar.', 'error');
+        }
+    } else {
+        // Nenhuma notificação se nada mudou
+    }
+
+    fecharModalPrecificacao(); // Fecha o modal após salvar
+}
+// ===== FIM DA CORREÇÃO 2.5 =====
+
+
+function calcularPrecoLojaModal(lojaKey, itemId, trigger, isKit) {
+    // O cálculo agora sempre flui do "Lucro Desejado"
+    
+    const item = isKit ? kits.find(k => k.id === itemId) : produtos.find(p => p.id === itemId);
+    if (!item) return;
 
     const cfg = lojasConfig[lojaKey];
-    const idLoja = `${lojaKey}-${produtoId}`; // ID base para os elementos desta loja
+    const idLoja = `${lojaKey}-${itemId}`;
 
-    // 1. Encontrar elementos DENTRO DO MODAL
+    // 1. Encontrar elementos
     const lucroDesejadoInput = document.getElementById(`lucro-desejado-${idLoja}`);
     const precoFinalInput = document.getElementById(`preco-final-${idLoja}`);
     const precoIdealSpan = document.getElementById(`preco-ideal-${idLoja}`);
     const comissaoValorSpan = document.getElementById(`comissao-valor-${idLoja}`);
     const taxaFixaValorSpan = document.getElementById(`taxa-fixa-valor-${idLoja}`);
-    const lucroRealSpan = document.getElementById(`lucro-real-${idLoja}`);
-    const margemRealSpan = document.getElementById(`margem-real-${idLoja}`);
+    const lucroRealSpan = document.getElementById(`lucro-real-${idLoja}`); 
+    const margemRealSpan = document.getElementById(`margem-real-${idLoja}`); 
 
-    // Verifica se todos os elementos foram encontrados (importante!)
     if (!lucroDesejadoInput || !precoFinalInput || !precoIdealSpan || !comissaoValorSpan || !taxaFixaValorSpan || !lucroRealSpan || !margemRealSpan) {
-        console.error(`Erro: Elementos não encontrados no modal para loja ${lojaKey}, produto ${produtoId}`);
+        console.error(`Erro: Elementos não encontrados no modal para loja ${lojaKey}, item ${itemId}`);
         return;
     }
 
     // 2. Obter Valores
-    const custoTotalProduto = produto.custo + produto.picking;
+    const custoTotalItem = isKit ? item.custoTotal : (item.custo + item.picking);
     const lucroDesejado = parseFloat(lucroDesejadoInput.value) || 0;
 
-    // 3. Calcular Preço Ideal
-    const subtotalParaCalculo = custoTotalProduto + lucroDesejado + cfg.taxaFixa;
-    const precoIdeal = (cfg.comissao < 1) ? subtotalParaCalculo / (1 - cfg.comissao) : subtotalParaCalculo;
+    // 3. Calcular Preço Ideal (que será o Preço Final)
+    const subtotalParaCalculo = custoTotalItem + lucroDesejado + cfg.taxaFixa;
+    const precoFinalCalculado = (cfg.comissao < 1) ? subtotalParaCalculo / (1 - cfg.comissao) : subtotalParaCalculo;
 
-    // 4. Calcular Taxas sobre o Preço Ideal
-    const comissaoValorIdeal = precoIdeal * cfg.comissao;
+    // 4. Calcular Taxas sobre o Preço Final
+    const comissaoValor = precoFinalCalculado * cfg.comissao;
     const taxaFixaValor = cfg.taxaFixa;
 
-    // 5. Atualizar Spans do Preço Ideal e Taxas
-    precoIdealSpan.textContent = formatarMoeda(precoIdeal);
-    comissaoValorSpan.textContent = formatarMoeda(comissaoValorIdeal);
+    // 5. Calcular Lucro/Margem Reais com base no Preço Final Calculado
+    // (Isto é uma verificação, o lucro real deve ser muito próximo do 'lucroDesejado')
+    const receitaLiquida = precoFinalCalculado - comissaoValor - cfg.taxaFixa;
+    const lucroReal = receitaLiquida - custoTotalItem; 
+    const margemReal = (precoFinalCalculado > 0) ? (lucroReal / precoFinalCalculado * 100) : 0;
+
+    // 6. Atualizar Spans e Inputs
+    precoIdealSpan.textContent = formatarMoeda(precoFinalCalculado); // Preço Ideal é o Preço Final
+    comissaoValorSpan.textContent = formatarMoeda(comissaoValor);
     taxaFixaValorSpan.textContent = formatarMoeda(taxaFixaValor);
+    
+    // Atualiza o input 'Preço Final' que agora é readonly
+    precoFinalInput.value = precoFinalCalculado.toFixed(2);
 
-    // 6. Atualizar Preço Final se o gatilho não foi ele mesmo
-    if (trigger === 'init' || trigger === 'lucro_loja') {
-        precoFinalInput.value = precoIdeal.toFixed(2);
-    }
-
-    // 7. Calcular Lucro/Margem Reais com base no Preço Final
-    const precoFinalAjustado = parseFloat(precoFinalInput.value) || 0;
-    const comissaoReal = precoFinalAjustado * cfg.comissao;
-    const receitaLiquida = precoFinalAjustado - comissaoReal - cfg.taxaFixa;
-    const lucroReal = receitaLiquida - custoTotalProduto; // Lucro antes de frete embutido (simplificado aqui)
-    const margemReal = (precoFinalAjustado > 0) ? (lucroReal / precoFinalAjustado * 100) : 0;
-
-    // 8. Atualizar Spans de Lucro/Margem Reais
+    // 7. Atualizar Spans de Lucro/Margem Reais
     const lucroRealFormatado = formatarMoeda(lucroReal);
     const margemRealFormatada = `${margemReal.toFixed(1).replace('.', ',')}%`;
 
-    lucroRealSpan.textContent = `${lucroRealFormatado} (${margemRealFormatada})`; // Combina na mesma linha
-    margemRealSpan.textContent = margemRealFormatada; // Mantém separado se precisar
+    lucroRealSpan.textContent = lucroRealFormatado;
+    margemRealSpan.textContent = margemRealFormatada;
 
-    // Aplica classes de cor ao valor do lucro real
-    const lucroRealElement = lucroRealSpan; // O span principal
-    lucroRealElement.classList.remove('profit-positive', 'profit-negative'); // Remove classes antigas
+    // 8. Aplicar classes de cor
+    const parentSpan = lucroRealSpan.parentElement; // Pega o <span> pai
+    parentSpan.classList.remove('profit-positive', 'profit-negative');
     if (lucroReal > 0) {
-        lucroRealElement.classList.add('profit-positive');
+        parentSpan.classList.add('profit-positive');
     } else if (lucroReal < 0) {
-        lucroRealElement.classList.add('profit-negative');
+        parentSpan.classList.add('profit-negative');
     }
 }
 
 
 // --- Sistema de Notificações ---
-// ... (código das Notificações - mostrarNotificacao - permanece o mesmo) ...
+// ... (código das Notificações permanece o mesmo) ...
 function mostrarNotificacao(msg, tipo = 'success') {
     const el = document.getElementById('notification');
     const txt = document.getElementById('notification-text');
@@ -1228,7 +1496,8 @@ function mostrarNotificacao(msg, tipo = 'success') {
 
     if (tipo === 'success') el.classList.add('bg-green-600', 'text-white');
     else if (tipo === 'error') el.classList.add('bg-red-600', 'text-white');
-    else el.classList.add('bg-blue-600', 'text-white');
+    else if (tipo === 'info') el.classList.add('bg-blue-600', 'text-white'); // Adicionado tipo info
+    else el.classList.add('bg-gray-700', 'text-white'); // Padrão genérico
 
     el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 3000);
